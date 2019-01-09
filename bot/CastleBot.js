@@ -1,8 +1,20 @@
 import {SPECS} from 'battlecode'
+import * as Util from './Util';
 
+var initialized = false;
 var step = -1;
 
+
+function initialize(robot) {
+    // Figure out best castle to start with
+    
+}
+
 export function castleTurn(robot) {
+    if (!initialized) {
+        initialize();
+        initialized = true;
+    }
     step++;
     robot.log("A Castle Turn");
     if (step % 10 === 0) {

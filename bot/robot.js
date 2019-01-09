@@ -16,7 +16,6 @@ class MyRobot extends BCAbstractRobot {
     }
     turn() {
         for (var property in this.bots) {
-            this.log(property)
             if (this.bots.hasOwnProperty(property) && this.me.unit.toString() === property) {
                 return this.bots[property](this); // Call the turn
             }
