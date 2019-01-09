@@ -2,17 +2,35 @@ import {SPECS} from 'battlecode'
 import * as Util from './Util';
 
 var initialized = false;
+var isLeader = false;
 var step = -1;
 
+const LEADER_SIGNAL = 1;
 
 function initialize(robot) {
-    // Figure out best castle to start with
+    // Check if leader castle is already claimed
+    var hasLeader = false;
+    var robots = robot.getVisibleRobots();
     
+    for (var i = 0; i < robots.length; i++) {
+        if (robots[i].castle_talk === LEADER_SIGNAL) {
+            hasLeader = true;
+            break;
+        }
+    }
+    
+    // Claim leader if no leader
+    if (!hasLeader) {
+        isLeader = true;
+        robot.castleTalk(LEADER_SIGNAL);
+    }
+    
+    // TODO: Figure out best castle to start with
 }
 
 export function castleTurn(robot) {
     if (!initialized) {
-        initialize();
+        initialize(robot);
         initialized = true;
     }
     step++;
