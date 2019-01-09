@@ -1,28 +1,28 @@
-// Taken from https://stackoverflow.com/questions/42919469/efficient-way-to-implement-priority-queue-in-javascript
+// Heavily modified from https://stackoverflow.com/questions/42919469/efficient-way-to-implement-priority-queue-in-javascript
 const top = 0;
 const parent = i => ((i + 1) >>> 1) - 1;
 const left = i => (i << 1) + 1;
 const right = i => (i + 1) << 1;
 
-class PriorityQueue {
-	constructor(comparator = (a, b) => a > b) {
+export default class PriorityQueue {
+	constructor() {
 		this._heap = [];
-		this._comparator = comparator;
+		this._scores = {};
+		this._map = {};
 	}
 	size() {
 		return this._heap.length;
 	}
 	isEmpty() {
-		return this.size() == 0;
+		return this.size() === 0;
 	}
 	peek() {
 		return this._heap[top];
 	}
-	push(...values) {
-		values.forEach(value => {
-			this._heap.push(value);
-			this._siftUp();
-		});
+	push(value, score) {
+		this._scores[value] = score;
+		this._heap.push(value);
+		this._siftUp();
 		return this.size();
 	}
 	pop() {
@@ -35,6 +35,10 @@ class PriorityQueue {
 		this._siftDown();
 		return poppedValue;
 	}
+	decreaseKey(value, priority) {
+		const index = this._map[value];
+		
+	}
 	replace(value) {
 		const replacedValue = this.peek();
 		this._heap[top] = value;
@@ -42,7 +46,7 @@ class PriorityQueue {
 		return replacedValue;
 	}
 	_greater(i, j) {
-		return this._comparator(this._heap[i], this._heap[j]);
+		return this._scores[this._heap[i]] > this._scores[this._heap[j]];
 	}
 	_swap(i, j) {
 		[this._heap[i], this._heap[j]] = [this._heap[j], this._heap[i]];
