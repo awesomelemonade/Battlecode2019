@@ -13,9 +13,12 @@ export class Dijkstras {
 		this.queue.push(start, 0);
 		this.dist[start.x][start.y] = 0;
 	}
-	resolve() {
+	resolve(stopCondition = (vector) => false) {
 		while (!this.queue.isEmpty()) {
 			var popped = this.queue.pop();
+			if (stopCondition(popped)) {
+				return popped;
+			}
 			var currentCost = this.dist[popped.x][popped.y];
 			for (var i = 0; i < this.moves.length; i++) {
 				var offset = this.moves[i];

@@ -1,6 +1,6 @@
 import {SPECS} from 'battlecode'
 import * as Util from './Util';
-import {Vector} from './Library';
+import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 
 var initialized = false;
@@ -42,14 +42,8 @@ function spawnPilgrim(robot) {
 
 export function castleTurn(robot) {
 	var before = new Date().getTime();
-	var moves = [];
-	moves.push(new Vector(-1, 0));
-	moves.push(new Vector(1, 0));
-	moves.push(new Vector(0, -1));
-	moves.push(new Vector(0, 1));
-	var costs = [1, 1, 1, 1];
-	var dijkstras = new Dijkstras(robot.map, new Vector(robot.me.x, robot.me.y), moves, costs);
-	dijkstras.resolve(robot);
+	var dijkstras = new Dijkstras(robot.map, new Vector(robot.me.x, robot.me.y), totalMoves, totalMoveCosts);
+	dijkstras.resolve();
 	var after = new Date().getTime();
 	robot.log("# of milliseconds: " + (after - before));
 	action = undefined;

@@ -46,4 +46,20 @@ function addMoves(radius) {
 		addMove(-x, -x, c);
 	}
 }
+
+function filter(oldMoves, oldCosts, cost) {
+	var moves = []
+	var moveCosts = []
+	for (var i = 0; i < oldMoves.length; i++) {
+		if (oldCosts[i] <= cost) {
+			moves.push(oldMoves[i]);
+			moveCosts.push(oldCosts[i]);
+		}
+	}
+	return [moves, moveCosts];
+}
+
 addMoves(10);
+var temp = filter(totalMoves, totalMoveCosts, 4);
+totalMoves = temp[0];
+totalMoveCosts = temp[1];
