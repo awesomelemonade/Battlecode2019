@@ -19,7 +19,7 @@ export class PriorityQueue {
 		return this._heap[top];
 	}
 	push(value, score) {
-		this._map[value] = this.size();
+		this._map[value.hash()] = this.size();
 		this._scores[value] = score;
 		this._heap.push(value);
 		this._siftUp(this.size() - 1);
@@ -35,9 +35,12 @@ export class PriorityQueue {
 		this._siftDown(top);
 		return poppedValue;
 	}
-	decreaseKey(value, score) {
+	getScore(value) {
+		return this._scores[value];
+	}
+	decreaseScore(value, score) {
 		this._scores[value] = score;
-		const index = this._map[value];
+		const index = this._map[value.hash()];
 		this._siftUp(index);
 	}
 	_less(i, j) {
@@ -45,8 +48,8 @@ export class PriorityQueue {
 	}
 	_swap(i, j) {
 		[this._heap[i], this._heap[j]] = [this._heap[j], this._heap[i]];
-		this._map[this._heap[i]] = i;
-		this._map[this._heap[j]] = j;
+		this._map[this._heap[i].hash()] = i;
+		this._map[this._heap[j].hash()] = j;
 	}
 	_siftUp(node) {
 		while (node > top && this._less(node, parent(node))) {

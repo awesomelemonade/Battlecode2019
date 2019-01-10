@@ -6,4 +6,7 @@ export class Vector {
 	add(vector) {
 		return new Vector(this.x + vector.x, this.y + vector.y);
 	}
+	hash() {
+		return this.x * 9999 + this.y;
+	}
 }
