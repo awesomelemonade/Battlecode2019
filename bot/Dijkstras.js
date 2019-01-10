@@ -11,6 +11,7 @@ export class Dijkstras {
 		this.dist = Array(terrainMap.length).fill().map(() => Array(terrainMap[0].length).fill(UNEXPLORED));
 		this.prev = Array(terrainMap.length).fill().map(() => Array(terrainMap[0].length).fill(null));
 		this.queue.push(start, 0);
+		this.dist[start.x][start.y] = 0;
 	}
 	resolve() {
 		while (!this.queue.isEmpty()) {
