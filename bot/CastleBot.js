@@ -1,6 +1,7 @@
 import {SPECS} from 'battlecode'
 import * as Util from './Util';
 import {Vector} from './Library';
+import {Dijkstras} from './Dijkstras'
 
 var initialized = false;
 var isLeader = false;
@@ -33,12 +34,24 @@ var test = false;
 var action = undefined;
 
 function spawnPilgrim(robot) {
-	action = robot.buildUnit(SPECS.PILGRIM, 1, 1); // TODO: Face towards target
 	// Radio pilgrim's target position
 	robot.signal(Util.encodePosition(new Vector(12, 34)), 1); // TODO: Actually calculate a position
+	// Build unit
+	action = robot.buildUnit(SPECS.PILGRIM, 1, 1); // TODO: Face towards target
 }
 
 export function castleTurn(robot) {
+	var before = new Date().getTime();
+	var moves = [];
+	moves.push(new Vector(-1, 0));
+	moves.push(new Vector(1, 0));
+	moves.push(new Vector(0, -1));
+	moves.push(new Vector(0, 1));
+	var costs = [1, 1, 1, 1];
+	var dijkstras = new Dijkstras(robot.map, new Vector(robot.me.x, robot.me.y), moves, costs);
+	dijkstras.resolve(robot);
+	var after = new Date().getTime();
+	robot.log("# of milliseconds: " + (after - before));
 	action = undefined;
 	if (!initialized) {
 		initialize(robot);
