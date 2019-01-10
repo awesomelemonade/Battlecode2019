@@ -1,10 +1,9 @@
-// Heavily modified from https://stackoverflow.com/questions/42919469/efficient-way-to-implement-priority-queue-in-javascript
 const top = 0;
 const parent = i => ((i + 1) >>> 1) - 1;
 const left = i => (i << 1) + 1;
 const right = i => (i + 1) << 1;
 
-export default class PriorityQueue {
+export class PriorityQueue {
 	constructor() {
 		this._heap = [];
 		this._scores = {};
@@ -20,9 +19,10 @@ export default class PriorityQueue {
 		return this._heap[top];
 	}
 	push(value, score) {
+		this._map[value] = this.size();
 		this._scores[value] = score;
 		this._heap.push(value);
-		this._siftUp();
+		this._siftUp(this.size() - 1);
 		return this.size();
 	}
 	pop() {
@@ -32,39 +32,34 @@ export default class PriorityQueue {
 			this._swap(top, bottom);
 		}
 		this._heap.pop();
-		this._siftDown();
+		this._siftDown(top);
 		return poppedValue;
 	}
-	decreaseKey(value, priority) {
+	decreaseKey(value, score) {
+		this._scores[value] = score;
 		const index = this._map[value];
-		
+		this._siftUp(index);
 	}
-	replace(value) {
-		const replacedValue = this.peek();
-		this._heap[top] = value;
-		this._siftDown();
-		return replacedValue;
-	}
-	_greater(i, j) {
-		return this._scores[this._heap[i]] > this._scores[this._heap[j]];
+	_less(i, j) {
+		return this._scores[this._heap[i]] < this._scores[this._heap[j]];
 	}
 	_swap(i, j) {
 		[this._heap[i], this._heap[j]] = [this._heap[j], this._heap[i]];
+		this._map[this._heap[i]] = i;
+		this._map[this._heap[j]] = j;
 	}
-	_siftUp() {
-		let node = this.size() - 1;
-		while (node > top && this._greater(node, parent(node))) {
+	_siftUp(node) {
+		while (node > top && this._less(node, parent(node))) {
 			this._swap(node, parent(node));
 			node = parent(node);
 		}
 	}
-	_siftDown() {
-		let node = top;
+	_siftDown(node) {
 		while (
-			(left(node) < this.size() && this._greater(left(node), node)) ||
-			(right(node) < this.size() && this._greater(right(node), node))
+			(left(node) < this.size() && this._less(left(node), node)) ||
+			(right(node) < this.size() && this._less(right(node), node))
 		) {
-			let maxChild = (right(node) < this.size() && this._greater(right(node), left(node))) ? right(node) : left(node);
+			let maxChild = (right(node) < this.size() && this._less(right(node), left(node))) ? right(node) : left(node);
 			this._swap(node, maxChild);
 			node = maxChild;
 		}
