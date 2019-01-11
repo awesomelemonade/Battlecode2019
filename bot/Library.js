@@ -9,6 +9,11 @@ export class Vector {
 	subtract(vector) {
 		return new Vector(this.x - vector.x, this.y - vector.y);
 	}
+	getDistanceSquared(vector) {
+		var tempX = this.x - vector.x;
+		var tempY = this.y - vector.y;
+		return tempX * tempX + tempY * tempY; 
+	}
 	isZero() {
 		return this.x === 0 && this.y === 0;
 	}
@@ -20,6 +25,9 @@ export class Vector {
 	}
 	toString() {
 		return "[" + this.x + ", " + this.y + "]";
+	}
+	static ofRobotPosition(robot) {
+		return new Vector(robot.x, robot.y);
 	}
 }
 

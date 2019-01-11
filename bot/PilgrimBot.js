@@ -10,7 +10,7 @@ export function pilgrimTurn(robot) {
 		robot.log("Pilgrim is full :)");
 		return robot.move(Math.floor(Math.random() * 3 - 1), Math.floor(Math.random() * 3 - 1));
 	} else {
-		var start = new Vector(robot.me.x, robot.me.y);
+		var start = Vector.ofRobotPosition(robot.me);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(hasResource);
 		var prev = stop;

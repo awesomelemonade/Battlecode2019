@@ -42,7 +42,7 @@ function spawnPilgrim(robot) {
 
 export function castleTurn(robot) {
 	var before = new Date().getTime();
-	var dijkstras = new Dijkstras(robot.map, new Vector(robot.me.x, robot.me.y), totalMoves, totalMoveCosts);
+	var dijkstras = new Dijkstras(robot.map, Vector.ofRobotPosition(robot.me), totalMoves, totalMoveCosts);
 	dijkstras.resolve();
 	var after = new Date().getTime();
 	robot.log("# of milliseconds: " + (after - before));
