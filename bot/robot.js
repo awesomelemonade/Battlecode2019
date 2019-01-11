@@ -1,9 +1,11 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 
 import {castleTurn} from './bot/CastleBot';
+import {churchTurn} from './bot/ChurchBot';
 import {pilgrimTurn} from './bot/PilgrimBot';
 import {crusaderTurn} from './bot/CrusaderBot';
-import {churchTurn} from './bot/ChurchBot';
+import {prophetTurn} from './bot/ProphetBot';
+import {preacherTurn} from './bot/PreacherBot';
 
 
 class WrappedController {
@@ -68,6 +70,8 @@ class MyRobot extends BCAbstractRobot {
 		this.bots[SPECS.CHURCH] = churchTurn;
 		this.bots[SPECS.PILGRIM] = pilgrimTurn;
 		this.bots[SPECS.CRUSADER] = crusaderTurn;
+		this.bots[SPECS.PROPHET] = prophetTurn;
+		this.bots[SPECS.PREACHER] = preacherTurn;
 		this.initialized = false;
 	}
 	turn() {
