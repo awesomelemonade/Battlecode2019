@@ -29,6 +29,7 @@ function initialize(robot) {
 	// TODO: Figure out best castle to start with
 	
 	// BFS for some karbonite/fuel positions
+	initialized = true;
 }
 var test = false;
 var action = undefined;
@@ -49,7 +50,6 @@ export function castleTurn(robot) {
 	action = undefined;
 	if (!initialized) {
 		initialize(robot);
-		initialized = true;
 	}
 	robot.log("A Castle Turn");
 	if (isLeader && !test) {

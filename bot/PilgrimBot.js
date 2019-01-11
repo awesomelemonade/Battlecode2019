@@ -7,8 +7,32 @@ var controller = null;
 export function pilgrimTurn(robot) {
 	controller = robot;
 	if (robot.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY || robot.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-		robot.log("Pilgrim is full :)");
-		return robot.move(Math.floor(Math.random() * 3 - 1), Math.floor(Math.random() * 3 - 1));
+		var start = Vector.ofRobotPosition(robot.me);
+		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
+		var stop = dijkstras.resolve(nextToCastleOrChurch);
+		var prev = stop;
+		var current = stop;
+		while (!current.equals(start)) {
+			prev = current;
+			current = dijkstras.prev[current.x][current.y];
+		}
+		var move = prev.subtract(start);
+		if (move.isZero()) {
+			const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+			for (var i = 0; i < adjacent.length; i++) {
+				var location = [start.x + adjacent[i][0], start.y + adjacent[i][1]];
+				var tempId = robot.robot_map[location[0]][location[1]];
+				if (tempId > 0) {
+					var temp = robot.getRobot(tempId);
+					if (temp.team === robot.me.team && (temp.unit === SPECS.CASTLE || temp.unit === SPECS.CHURCH)) {
+						return this.give(adjacent[i][0], adjacent[i][1], robot.me.karbonite, robot.me.fuel);
+					}
+				}
+			}
+			robot.log("Doing Nothing? " + start);
+		} else {
+			return robot.move(move.x, move.y);
+		}
 	} else {
 		var start = Vector.ofRobotPosition(robot.me);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
@@ -22,13 +46,11 @@ export function pilgrimTurn(robot) {
 		var move = prev.subtract(start);
 		if (move.isZero()) {
 			if (hasResource(start)) {
-				robot.log("Mining: " + robot.me.x + " - " + robot.me.y + " - " + robot.karbonite_map[robot.me.x][robot.me.y] + " - " + robot.fuel_map[robot.me.x][robot.me.y]);
 				return robot.mine();
 			} else {
 				robot.log("Doing Nothing? " + start);
 			}
 		} else {
-			robot.log("Moving: " + start + " - " + move);
 			return robot.move(move.x, move.y);
 		}
 	}
@@ -36,4 +58,20 @@ export function pilgrimTurn(robot) {
 
 function hasResource(location) {
 	return controller.karbonite_map[location.x][location.y] || controller.fuel_map[location.x][location.y];
+}
+
+function nextToCastleOrChurch(location) {
+	var castles = Object.values(controller.castles);
+	for (var i = 0; i < castles.length; i++) {
+		if (location.getDistanceSquared(castles[i]) <= 2) {
+			return true;
+		}
+	}
+	var churches = Object.values(controller.churches);
+	for (var i = 0; i < churches.length; i++) {
+		if (location.getDistanceSquared(churches[i]) <= 2) {
+			return true;
+		}
+	}
+	return false;
 }

@@ -31,14 +31,14 @@ class MyRobot extends BCAbstractRobot {
 				break;
 			}
 		}
+		this.initialized = true;
 	}
 	turn() {
 		if (!this.initialized) {
 			this.init();
-			this.initialized = true;
 		}
 		this.controller.turn(); // Preparation of controller
-		this.botTurn(this.controller); // Execute Turn
+		return this.botTurn(this.controller); // Execute Turn
 	}
 }
 
