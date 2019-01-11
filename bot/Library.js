@@ -6,8 +6,20 @@ export class Vector {
 	add(vector) {
 		return new Vector(this.x + vector.x, this.y + vector.y);
 	}
+	subtract(vector) {
+		return new Vector(this.x - vector.x, this.y - vector.y);
+	}
+	isZero() {
+		return this.x === 0 && this.y === 0;
+	}
+	equals(vector) {
+		return this.x === vector.x && this.y === vector.y;
+	}
 	hash() {
 		return this.x * 9999 + this.y;
+	}
+	toString() {
+		return "[" + this.x + ", " + this.y + "]";
 	}
 }
 

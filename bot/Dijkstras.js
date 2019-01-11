@@ -12,6 +12,7 @@ export class Dijkstras {
 		this.prev = Array(terrainMap.length).fill().map(() => Array(terrainMap[0].length).fill(null));
 		this.queue.push(start, 0);
 		this.dist[start.x][start.y] = 0;
+		this.prev[start.x][start.y] = new Vector(0, 0);
 	}
 	resolve(stopCondition = (vector) => false) {
 		while (!this.queue.isEmpty()) {
@@ -32,7 +33,7 @@ export class Dijkstras {
 					this.prev[toExplore.x][toExplore.y] = popped;
 					this.queue.push(toExplore, moveCost);
 				} else {
-					if (moveCost < this.queue.getScore(toExplore)) {
+					if (moveCost < this.dist[toExplore.x][toExplore.y]) {
 						this.dist[toExplore.x][toExplore.y] = moveCost;
 						this.prev[toExplore.x][toExplore.y] = popped;
 						this.queue.decreaseScore(toExplore, moveCost);
