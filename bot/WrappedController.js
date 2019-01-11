@@ -1,4 +1,5 @@
 import {SPECS} from 'battlecode'
+import {Vector} from './Library';
 
 export class WrappedController {
 	constructor(robot) {
@@ -19,20 +20,22 @@ export class WrappedController {
 			this[this.turnProperties[i]] = this.robot[this.turnProperties[i]];
 		}
 		var transposedRobotMap = this.getVisibleRobotMap();
-		this.robot_map = transposedRobotMap[0]((col, i) => transposedRobotMap.map(row => row[i]));
+		this.robot_map = transposedRobotMap[0].map((col, i) => transposedRobotMap.map(row => row[i]));
 		var self = this;
 		Object.keys(this.castles).forEach(function(castleId) {
+			castleId = parseInt(castleId);
 			var castle = self.castles[castleId];
-			if (self.robot_map[churhc.x][church.y] !== -1 && self.robot_map[castle.x][castle.y] !== castleId) {
+			if (self.robot_map[castle.x][castle.y] !== -1 && self.robot_map[castle.x][castle.y] !== castleId) {
 				delete self.castles[castleId];
-				this.map[castle.x][castle.y] = true;
+				self.map[castle.x][castle.y] = true;
 			}
 		});
 		Object.keys(this.churches).forEach(function(churchId) {
+			churchId = parseInt(churchId);
 			var church = self.churches[churchId];
 			if (self.robot_map[church.x][church.y] !== -1 && self.robot_map[church.x][church.y] !== churchId) {
 				delete self.churches[churchId];
-				this.map[church.x][church.y] = true;
+				self.map[church.x][church.y] = true;
 			}
 		});
 		var visibleRobots = this.getVisibleRobots();
