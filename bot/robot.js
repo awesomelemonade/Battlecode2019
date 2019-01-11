@@ -74,18 +74,24 @@ class MyRobot extends BCAbstractRobot {
 		this.bots[SPECS.PREACHER] = preacherTurn;
 		this.initialized = false;
 	}
-	turn() {
-		if (!this.initialized) {
-			this.controller = new WrappedController(this);
-			this.initialized = true;
-		}
-		this.controller.turn();
-		// Execute turn
+	init() {
+		// Create controller
+		this.controller = new WrappedController(this);
+		// Figure out unit type to set this.botTurn
 		for (var property in this.bots) {
 			if (this.bots.hasOwnProperty(property) && this.me.unit.toString() === property) {
-				return this.bots[property](this.controller); // Call the turn
+				this.botTurn = this.bots[property]; // Set this.botTurn
+				break;
 			}
 		}
+	}
+	turn() {
+		if (!this.initialized) {
+			this.init();
+			this.initialized = true;
+		}
+		this.controller.turn(); // Preparation of controller
+		this.botTurn(this.controller); // Execute Turn
 	}
 }
 
