@@ -1,6 +1,7 @@
 import {SPECS} from 'battlecode'
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
+import {hasResource, isNextToCastleOrChurch} from './Util';
 
 var controller = null;
 
@@ -9,7 +10,7 @@ export function pilgrimTurn(robot) {
 	if (robot.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY || robot.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
 		var start = Vector.ofRobotPosition(robot.me);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve(nextToCastleOrChurch);
+		var stop = dijkstras.resolve(isNextToCastleOrChurch);
 		var prev = stop;
 		var current = stop;
 		while (!current.equals(start)) {
@@ -54,24 +55,4 @@ export function pilgrimTurn(robot) {
 			return robot.move(move.x, move.y);
 		}
 	}
-}
-
-function hasResource(location) {
-	return controller.karbonite_map[location.x][location.y] || controller.fuel_map[location.x][location.y];
-}
-
-function nextToCastleOrChurch(location) {
-	var castles = Object.values(controller.castles);
-	for (var i = 0; i < castles.length; i++) {
-		if (location.getDistanceSquared(castles[i]) <= 2) {
-			return true;
-		}
-	}
-	var churches = Object.values(controller.churches);
-	for (var i = 0; i < churches.length; i++) {
-		if (location.getDistanceSquared(churches[i]) <= 2) {
-			return true;
-		}
-	}
-	return false;
 }
