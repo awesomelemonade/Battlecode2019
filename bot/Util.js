@@ -86,6 +86,17 @@ export function outOfBounds(vector) {
 
 const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 
+export function getAdjacent(position) {
+	var ret = [];
+	for (var i = 0; i < adjacent.length; i++) {
+		var v = new Library.Vector(position.x + adjacent[i][0], position.y + adjacent[i][1]);
+		if (!outOfBounds(v)) { // Check if out of bounds
+			ret.push(v);
+		}
+	}
+	return ret;
+}
+
 export function getAdjacentPassable(position) {
 	var ret = [];
 	for (var i = 0; i < adjacent.length; i++) {

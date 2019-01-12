@@ -34,16 +34,15 @@ export function pilgrimTurn(robot) {
 		var stop = dijkstras.resolve(Util.isNextToCastleOrChurch);
 		var move = Util.getMove(dijkstras, start, stop);
 		if (move.isZero()) {
-			const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+			const adjacent = Util.getAdjacent(start);
 			for (var i = 0; i < adjacent.length; i++) {
-				var location = new Vector(start.x + adjacent[i][0], start.y + adjacent[i][1]);
-				if (!Util.outOfBounds(location)) {
-					var tempId = robot.robot_map[location.x][location.y];
-					if (tempId > 0) {
-						var temp = robot.getRobot(tempId);
-						if (temp.team === robot.me.team && (temp.unit === SPECS.CASTLE || temp.unit === SPECS.CHURCH)) {
-							return this.give(adjacent[i][0], adjacent[i][1], robot.me.karbonite, robot.me.fuel);
-						}
+				var location = adjacent[i];
+				var tempId = robot.robot_map[location.x][location.y];
+				if (tempId > 0) {
+					var temp = robot.getRobot(tempId);
+					if (temp.team === robot.me.team && (temp.unit === SPECS.CASTLE || temp.unit === SPECS.CHURCH)) {
+						var offset = location.subtract(start);
+						return this.give(offset.x, offset.y, robot.me.karbonite, robot.me.fuel);
 					}
 				}
 			}
