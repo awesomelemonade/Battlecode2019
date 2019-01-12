@@ -20,6 +20,9 @@ export class Vector {
 	equals(vector) {
 		return this.x === vector.x && this.y === vector.y;
 	}
+	isAdjacentTo(vector) {
+		return this.getDistanceSquared(vector) <= 2;
+	}
 	hash() {
 		return this.x * 9999 + this.y;
 	}
