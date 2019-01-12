@@ -73,14 +73,7 @@ function spawnPilgrim(robot) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[pilgrimsBuilt];
 		var castlePosition = Vector.ofRobotPosition(robot.me);
-		const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-		var start = [];
-		for (var i = 0; i < adjacent.length; i++) {
-			var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
-			if ((!Util.outOfBounds(v)) && robot.map[v.x][v.y] === true) { // Check if passable
-				start.push(v);
-			}
-		}
+		var start = Util.getAdjacentPassable(castlePosition);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 		dijkstras.resolve((vector) => vector.equals(location));
 		// Build unit
@@ -105,16 +98,9 @@ function spawnCrusader(robot) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[crusadersBuilt];
 		var castlePosition = Vector.ofRobotPosition(robot.me);
-		const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-		var start = [];
-		for (var i = 0; i < adjacent.length; i++) {
-			var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
-			if ((!Util.outOfBounds(v)) && robot.map[v.x][v.y] === true) { // Check if passable
-				start.push(v);
-			}
-		}
+		var start = Util.getAdjacentPassable(castlePosition);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
-		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location));
+		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location)); // TODO: could be occupying a pilgrim's resource
 		// Build unit
 		while (!location.equals(dijkstras.prev[location.x][location.y])) {
 			location = dijkstras.prev[location.x][location.y];

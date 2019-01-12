@@ -83,3 +83,16 @@ export function isNextToCastleOrChurch(location) {
 export function outOfBounds(vector) {
 	return vector.x < 0 || vector.x >= controller.map.length || vector.y < 0 || vector.y >= controller.map[0].length;
 }
+
+const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+
+export function getAdjacentPassable(position) {
+	var ret = [];
+	for (var i = 0; i < adjacent.length; i++) {
+		var v = new Library.Vector(position.x + adjacent[i][0], position.y + adjacent[i][1]);
+		if ((!outOfBounds(v)) && controller.map[v.x][v.y] === true) { // Check if passable
+			ret.push(v);
+		}
+	}
+	return ret;
+}
