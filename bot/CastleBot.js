@@ -68,16 +68,18 @@ var action = undefined;
 var numBuilt = 0;
 
 function spawnPilgrim(robot) {
-	// Radio pilgrim's target position
-	robot.signal(Util.encodePosition(new Vector(12, 34)), 1); // TODO: Actually calculate a position
-	// Build unit
 	if (numBuilt < resourceOrder.length) {
 		var location = resourceOrder[numBuilt];
+		// Build unit
 		while (!location.equals(dijkstras.prev[location.x][location.y])) {
 			location = dijkstras.prev[location.x][location.y];
 		}
 		if (robot.robot_map[location.x][location.y] === 0) {
-			action = robot.buildUnit(SPECS.PILGRIM, location.x - robot.me.x, location.y - robot.me.y); // Face towards target
+			var offsetX = location.x - robot.me.x;
+			var offsetY = location.y - robot.me.y
+			action = robot.buildUnit(SPECS.PILGRIM, offsetX, offsetY); // Face towards target
+			// Radio pilgrim's target position
+			robot.signal(Util.encodePosition(resourceOrder[numBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			numBuilt++;
 		}
 	}
