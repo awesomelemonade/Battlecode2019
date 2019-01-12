@@ -42,8 +42,26 @@ export function isVerticallySymmetric(array) {
 	return true;
 }
 
+export function getMove(dijkstras, start, location) {
+	var prev = location;
+	var current = location;
+	while (!current.equals(start)) {
+		prev = current;
+		current = dijkstras.prev[current.x][current.y];
+	}
+	return prev.subtract(start);
+}
+
+export function hasKarbonite(location) {
+	return controller.karbonite_map[location.x][location.y];
+}
+
+export function hasFuel(location) {
+	return controller.fuel_map[location.x][location.y];
+}
+
 export function hasResource(location) {
-	return controller.karbonite_map[location.x][location.y] || controller.fuel_map[location.x][location.y];
+	return hasKarbonite(location) || hasFuel(location);
 }
 
 export function isNextToCastleOrChurch(location) {
@@ -60,4 +78,8 @@ export function isNextToCastleOrChurch(location) {
 		}
 	}
 	return false;
+}
+
+export function outOfBounds(vector) {
+	return vector.x < 0 || vector.x >= controller.map.length || vector.y < 0 || vector.y >= controller.map[0].length;
 }

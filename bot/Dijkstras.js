@@ -1,5 +1,6 @@
 import {PriorityQueue} from './PriorityQueue'
 import {Vector} from './Library'
+import {outOfBounds} from './Util'
 
 const UNEXPLORED = -1;
 export class Dijkstras {
@@ -10,9 +11,17 @@ export class Dijkstras {
 		this.moveCosts = moveCosts;
 		this.dist = Array(terrainMap.length).fill().map(() => Array(terrainMap[0].length).fill(UNEXPLORED));
 		this.prev = Array(terrainMap.length).fill().map(() => Array(terrainMap[0].length).fill(null));
-		this.queue.push(start, 0);
-		this.dist[start.x][start.y] = 0;
-		this.prev[start.x][start.y] = new Vector(0, 0);
+		if (Array.isArray(start)) {
+			for (var i = 0; i < start.length; i++) {
+				this.queue.push(start[i], 0);
+				this.dist[start[i].x][start[i].y] = 0;
+				this.prev[start[i].x][start[i].y] = start[i]
+			}
+		} else {
+			this.queue.push(start, 0);
+			this.dist[start.x][start.y] = 0;
+			this.prev[start.x][start.y] = start;
+		}
 	}
 	resolve(stopCondition = (vector) => false) {
 		while (!this.queue.isEmpty()) {
@@ -25,7 +34,7 @@ export class Dijkstras {
 				var offset = this.moves[i];
 				var moveCost = currentCost + this.moveCosts[i];
 				var toExplore = popped.add(offset);
-				if (this.outOfBounds(toExplore) || this.terrainMap[toExplore.x][toExplore.y] == false) {
+				if (outOfBounds(toExplore) || this.terrainMap[toExplore.x][toExplore.y] == false) {
 					continue;
 				}
 				if (this.dist[toExplore.x][toExplore.y] == UNEXPLORED) {
@@ -41,8 +50,5 @@ export class Dijkstras {
 				}
 			}
 		}
-	}
-	outOfBounds(vector) {
-		return vector.x < 0 || vector.x >= this.terrainMap.length || vector.y < 0 || vector.y >= this.terrainMap[0].length;
 	}
 }
