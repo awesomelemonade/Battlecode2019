@@ -38,7 +38,7 @@ function initialize(robot) {
 			start.push(v);
 		}
 	}
-	dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
+	var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 	dijkstras.resolve(function(location) {
 		if (Util.hasKarbonite(location)) {
 			karboniteOrder.push(location);
@@ -59,7 +59,6 @@ function initialize(robot) {
 	initialized = true;
 }
 
-var dijkstras = null;
 var karboniteOrder = [];
 var fuelOrder = [];
 var resourceOrder = [];
@@ -69,7 +68,19 @@ var numBuilt = 0;
 
 function spawnPilgrim(robot) {
 	if (numBuilt < resourceOrder.length) {
+		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[numBuilt];
+		var castlePosition = Vector.ofRobotPosition(robot.me);
+		const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+		var start = [];
+		for (var i = 0; i < adjacent.length; i++) {
+			var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
+			if ((!Util.outOfBounds(v)) && robot.map[v.x][v.y] === true) { // Check if passable
+				start.push(v);
+			}
+		}
+		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
+		dijkstras.resolve((vector) => vector.equals(location));
 		// Build unit
 		while (!location.equals(dijkstras.prev[location.x][location.y])) {
 			location = dijkstras.prev[location.x][location.y];
@@ -81,6 +92,8 @@ function spawnPilgrim(robot) {
 			// Radio pilgrim's target position
 			robot.signal(Util.encodePosition(resourceOrder[numBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			numBuilt++;
+		} else {
+			robot.log("Unable to spawn robot: " + location + " - " + robot.map[location.x][location.y]);
 		}
 	}
 }
@@ -90,7 +103,6 @@ export function castleTurn(robot) {
 	if (!initialized) {
 		initialize(robot);
 	}
-	robot.log("A Castle Turn");
 	if (isLeader) {
 		spawnPilgrim(robot);
 	}

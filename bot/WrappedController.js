@@ -1,5 +1,6 @@
 import {SPECS} from 'battlecode'
 import {Vector} from './Library';
+import * as Util from './Util';
 
 export class WrappedController {
 	constructor(robot) {
@@ -14,6 +15,7 @@ export class WrappedController {
 		this.robot = robot;
 		this.castles = {};
 		this.churches = {};
+		this.pilgrims = {};
 	}
 	turn() {
 		for (var i = 0; i < this.turnProperties.length; i++) {
@@ -38,6 +40,14 @@ export class WrappedController {
 				self.map[church.x][church.y] = true;
 			}
 		});
+		Object.keys(this.pilgrims).forEach(function(pilgrimId) {
+			pilgrimId = parseInt(pilgrimId);
+			var pilgrim = self.pilgrims[pilgrimId];
+			if (self.robot_map[pilgrim.x][pilgrim.y] !== pilgrimId) {
+				delete self.pilgrims[pilgrimId];
+				self.map[pilgrim.x][pilgrim.y] = true;
+			}
+		});
 		var visibleRobots = this.getVisibleRobots();
 		for (var i = 0; i < visibleRobots.length; i++) {
 			var r = visibleRobots[i];
@@ -50,6 +60,22 @@ export class WrappedController {
 					if (this.churches[r.id] === undefined && r.unit === SPECS.CHURCH) {
 						this.churches[r.id] = Vector.ofRobotPosition(r);
 						this.map[r.x][r.y] = false;
+					}
+					if (r.unit === SPECS.PILGRIM) {
+						if (this.pilgrims[r.id] === undefined) {
+							this.pilgrims[r.id] = Vector.ofRobotPosition(r);
+						} else {
+							var prev = this.pilgrims[r.id];
+							var current = Vector.ofRobotPosition(r);
+							if (current.equals(prev)) { // If the pilgrim stayed still
+								this.map[current.x][current.y] = false;
+							} else { // If the pilgrim moved
+								if (this.map[prev.x][prev.y] === false) {
+									this.map[prev.x][prev.y] = true;
+								}
+								this.pilgrims[r.id] = current;
+							}
+						}
 					}
 				}
 			}
