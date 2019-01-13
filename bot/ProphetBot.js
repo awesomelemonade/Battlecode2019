@@ -1,3 +1,8 @@
+import {SPECS} from 'battlecode'
+import * as Util from './Util';
+import {Dijkstras} from './Dijkstras'
+import {Vector, totalMoves, totalMoveCosts} from './Library';
+
 
 var controller = null;
 

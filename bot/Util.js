@@ -135,4 +135,5 @@ export function getVisibleEnemies() {
 			ret.push(robot);
 		}
 	}
+	return ret;
 }

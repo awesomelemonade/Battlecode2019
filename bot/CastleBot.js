@@ -67,6 +67,7 @@ var action = undefined;
 var unitsBuilt = 0;
 var pilgrimsBuilt = 0;
 var crusadersBuilt = 0;
+var prophetsBuilt = 0;
 
 function spawnPilgrim(robot) {
 	if (pilgrimsBuilt < resourceOrder.length) {
@@ -119,6 +120,32 @@ function spawnCrusader(robot) {
 	}
 }
 
+function spawnProphet(robot) {
+	if (prophetsBuilt < resourceOrder.length) {
+		// Rerun dijkstras to account for pilgrims blocking spawn locations
+		var location = resourceOrder[prophetsBuilt];
+		var castlePosition = Vector.ofRobotPosition(robot.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
+		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location)); // TODO: could be occupying a pilgrim's resource
+		// Build unit
+		while (!location.equals(dijkstras.prev[location.x][location.y])) {
+			location = dijkstras.prev[location.x][location.y];
+		}
+		if (robot.robot_map[location.x][location.y] === 0) {
+			var offsetX = location.x - robot.me.x;
+			var offsetY = location.y - robot.me.y
+			action = robot.buildUnit(SPECS.PROPHET, offsetX, offsetY); // Face towards target
+			// Radio prophet's target position
+			robot.signal(Util.encodePosition(resourceOrder[prophetsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
+			prophetsBuilt++;
+			unitsBuilt++;
+		} else {
+			robot.log("Unable to spawn prophet: " + location + " - " + robot.map[location.x][location.y]);
+		}
+	}
+}
+
 export function castleTurn(robot) {
 	action = undefined;
 	if (!initialized) {
@@ -128,7 +155,7 @@ export function castleTurn(robot) {
 		if (unitsBuilt % 2 == 0) {
 			spawnPilgrim(robot);
 		} else {
-			spawnCrusader(robot);
+			spawnProphet(robot);
 		}
 	}
 	return action;
