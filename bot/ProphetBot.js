@@ -32,10 +32,10 @@ export function prophetTurn(c) {
 	if (visibleEnemies.length === 0) {
 		// Don't see enemy
 		var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((vector) => vector.isAdjacentTo(target));
+		var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && !Util.hasResource(vector)));
 		var move = Util.getMove(dijkstras, currentPosition, stop);
 		if (!move.isZero()) {
-			controller.move(move.x, move.y);
+			return controller.move(move.x, move.y);
 		}
 	} else {
 		// We see at least 1 enemy
@@ -60,17 +60,18 @@ export function prophetTurn(c) {
 				costs.push(1);
 			}
 			var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
-			var stop = dijkstras.resolve((vector) => vector.isAdjacentTo(target));
+			var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && !Util.hasResource(vector)));
 			var move = Util.getMove(dijkstras, currentPosition, stop);
 			if (move.isZero()) {
 				var offset = closestEnemyPosition.subtract(currentPosition);
+				return controller.attack(offset.x, offset.y);
 			} else {
-				controller.move(move.x, move.y);
+				return controller.move(move.x, move.y);
 			}
 		} else {
 			// Enemy cannot see you
 			var offset = closestEnemyPosition.subtract(currentPosition);
-			return this.attack(offset.x, offset.y);
+			return controller.attack(offset.x, offset.y);
 		}
 	}
 	
