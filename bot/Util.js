@@ -1,3 +1,4 @@
+import {SPECS} from 'battlecode'
 import * as Library from './Library';
 
 const X_SHIFT = 6;
@@ -106,4 +107,32 @@ export function getAdjacentPassable(position) {
 		}
 	}
 	return ret;
+}
+
+export function getInitialCastleSignal() {
+	// Retrieve signal from castle and set target
+	var robots = controller.getVisibleRobots();
+	for (var i = 0; i < robots.length; i++) {
+		var robot = robots[i];
+		if (robot.unit === SPECS.CASTLE && controller.isRadioing(robot)) {
+			var distX = robot.x - controller.me.x;
+			var distY = robot.y - controller.me.y;
+			var distSquared = distX * distX + distY * distY;
+			if (distSquared <= 2 && distSquared === robot.signal_radius) {
+				return robot.signal;
+			}
+		}
+	}
+	return -1;
+}
+
+export function getVisibleEnemies() {
+	var ret = [];
+	var robots = controller.getVisibleRobots();
+	for (var i = 0; i < robots.length; i++) {
+		var robot = robots[i];
+		if (robot.team !== controller.me.team) {
+			ret.push(robot);
+		}
+	}
 }

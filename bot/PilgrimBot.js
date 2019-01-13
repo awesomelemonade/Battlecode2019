@@ -8,18 +8,12 @@ var controller = null;
 var initialized = false;
 function init() {
 	// Retrieve signal from castle and set target
-	var robots = controller.getVisibleRobots();
-	for (var i = 0; i < robots.length; i++) {
-		var robot = robots[i];
-		if (robot.unit === SPECS.CASTLE && controller.isRadioing(robot)) {
-			var distX = robot.x - controller.me.x;
-			var distY = robot.y - controller.me.y;
-			var distSquared = distX * distX + distY * distY;
-			if (distSquared <= 2 && distSquared === robot.signal_radius) {
-				target = Util.decodePosition(robot.signal);
-				controller.log("Setting target: " + target);
-			}
-		}
+	var castleSignal = Util.getInitialCastleSignal();
+	if (castleSignal === -1) {
+		controller.log("Unable to find castle signal?");
+	} else {
+		target = Util.decodePosition(castleSignal);
+		controller.log("Setting target: " + target);
 	}
 	initialized = true;
 }
