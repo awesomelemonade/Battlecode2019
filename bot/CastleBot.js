@@ -79,10 +79,12 @@ function spawnPilgrim(robot) {
 			robot.signal(Util.encodePosition(resourceOrder[pilgrimsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			pilgrimsBuilt++;
 			unitsBuilt++;
+			return true;
 		} else {
 			robot.log("Unable to spawn pilgrim: " + location + " - " + robot.map[location.x][location.y]);
 		}
 	}
+	return false;
 }
 function spawnCrusader(robot) {
 	if (crusadersBuilt < resourceOrder.length) {
@@ -104,10 +106,12 @@ function spawnCrusader(robot) {
 			robot.signal(Util.encodePosition(resourceOrder[crusadersBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			crusadersBuilt++;
 			unitsBuilt++;
+			return true;
 		} else {
 			robot.log("Unable to spawn crusader: " + location + " - " + robot.map[location.x][location.y]);
 		}
 	}
+	return false;
 }
 
 function spawnProphet(robot) {
@@ -130,10 +134,12 @@ function spawnProphet(robot) {
 			robot.signal(Util.encodePosition(resourceOrder[prophetsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			prophetsBuilt++;
 			unitsBuilt++;
+			return true;
 		} else {
 			robot.log("Unable to spawn prophet: " + location + " - " + robot.map[location.x][location.y]);
 		}
 	}
+	return false;
 }
 
 function handleCastleTalk(robot) {
@@ -180,7 +186,9 @@ export function castleTurn(robot) {
 	handleCastleTalk(robot);
 	if (isLeader) {
 		if (unitsBuilt % 2 == 0) {
-			spawnPilgrim(robot);
+			if (!spawnPilgrim(robot)) {
+				spawnProphet(robot);
+			}
 		} else {
 			spawnProphet(robot);
 		}
