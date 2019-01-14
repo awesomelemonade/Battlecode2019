@@ -137,3 +137,8 @@ export function getVisibleEnemies() {
 	}
 	return ret;
 }
+
+export function isWithinAttackRange(unitType, distanceSquared) {
+	var attackRadius = SPECS.UNITS[unitType].ATTACK_RADIUS;
+	return distanceSquared >= attackRadius[0] && distanceSquared <= attackRadius[1];
+}

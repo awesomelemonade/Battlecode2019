@@ -39,21 +39,35 @@ export function prophetTurn(c) {
 		}
 	} else {
 		// We see at least 1 enemy
-		var closestEnemy = null;
-		var closestEnemyPosition = null;
-		var closestDistanceSquared = 9999999; // Arbitrary Large Number
+		var bestEnemey = null;
+		var bestEnemyPosition = null;
+		var bestEnemyIsStructure = true;
+		var bestDistanceSquared = 9999999; // Arbitrary Large Number
 		for (var i = 0; i < visibleEnemies.length; i++) {
 			var enemy = visibleEnemies[i];
 			var enemyPosition = Vector.ofRobotPosition(enemy);
 			var distanceSquared = currentPosition.getDistanceSquared(enemyPosition);
-			if (distanceSquared < closestDistanceSquared) {
-				closestEnemy = enemy;
-				closestEnemyPosition = enemyPosition;
-				closestDistanceSquared = distanceSquared;
+			if (Util.isWithinAttackRange(SPECS.PROPHET, distanceSquared)) {
+				if (bestEnemyIsStructure) {
+					if (distanceSquared < bestDistanceSquared) {
+						bestEnemy = enemy;
+						bestEnemyPosition = enemyPositoin;
+						bestEnemyIsStructure = (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH);
+						bestDistanceSquared = distanceSquared;
+					}
+				} else if (enemy.unit !== SPECS.CASTLE && enemy.unit !== SPECS.CHURCH) {
+					// TODO: prioritize the ones that can attack rather than just distance
+					if (distanceSquared < bestDistanceSquared) {
+						bestEnemy = enemy;
+						bestEnemyPosition = enemyPosition;
+						bestDistanceSquared = distanceSquared;
+					}
+				}
 			}
 		}
-		if (closestDistanceSquared <= SPECS.UNITS[closestEnemy.unit].VISION_RADIUS) {
-			// Enemy can see you
+		// Sort enemies - Closest robot within attack range, then closest structure within attack range
+		if ((!bestEnemyIsStructure) && bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
+			// Enemy, that is not the castle or church, can see you
 			// TODO: Alternatively, you can use BFS instead of Dijkstras
 			var costs = [];
 			for (var j = 0; j < totalMoves.length; j++) {
@@ -62,6 +76,7 @@ export function prophetTurn(c) {
 			var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
 			var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
 			var move = Util.getMove(dijkstras, currentPosition, stop);
+			// TODO: make sure move actually steps out of enemy's vision range
 			if (move.isZero()) {
 				var offset = closestEnemyPosition.subtract(currentPosition);
 				return controller.attack(offset.x, offset.y);
