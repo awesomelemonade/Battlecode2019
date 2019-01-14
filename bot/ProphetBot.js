@@ -32,7 +32,7 @@ export function prophetTurn(c) {
 	if (visibleEnemies.length === 0) {
 		// Don't see enemy
 		var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && !Util.hasResource(vector)));
+		var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
 		var move = Util.getMove(dijkstras, currentPosition, stop);
 		if (!move.isZero()) {
 			return controller.move(move.x, move.y);
@@ -60,7 +60,7 @@ export function prophetTurn(c) {
 				costs.push(1);
 			}
 			var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
-			var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && !Util.hasResource(vector)));
+			var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
 			var move = Util.getMove(dijkstras, currentPosition, stop);
 			if (move.isZero()) {
 				var offset = closestEnemyPosition.subtract(currentPosition);
@@ -82,7 +82,7 @@ export function prophetTurn(c) {
 			if (alreadyAtDestination) {
 				attack()
 			} else {
-				// move full speed
+				// move full speed - TODO: maybe we should consider attacking
 			}
 		} else {
 			attack()
