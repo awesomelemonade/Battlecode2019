@@ -6,29 +6,19 @@ import {Dijkstras} from './Dijkstras'
 var initialized = false;
 var isLeader = false;
 
-const LEADER_SIGNAL = 1;
+// Use r.turn to differentiate castle vs other units?
+// castle_talk among castles for the first few turns - 8 bits
+const CASTLE_IDENTIFIER_BITSHIFT = 0; // Differentiate Castle and other units
+const CASTLE_LEADER_BITSHIFT = 1; // Temporary leader identification system
+const CASTLE_LOCATION_BITSHIFT = 2;
+const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
+// castle_talk among castles after the first few turns
+
 
 function initialize(robot) {
-	// Check if leader castle is already claimed
-	var hasLeader = false;
-	var robots = robot.getVisibleRobots();
-	
-	for (var i = 0; i < robots.length; i++) {
-		if (robots[i].castle_talk === LEADER_SIGNAL) {
-			hasLeader = true;
-			break;
-		}
-	}
-	
-	// Claim leader if no leader
-	if (!hasLeader) {
-		isLeader = true;
-		robot.castleTalk(LEADER_SIGNAL);
-	}
-	
 	// TODO: Figure out best castle to start with
 	
-	// Dijkstra for some karbonite/fuel positions
+	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
 	var castlePosition = Vector.ofRobotPosition(robot.me);
 	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 	var start = [];
@@ -146,11 +136,48 @@ function spawnProphet(robot) {
 	}
 }
 
+function handleCastleTalk(robot) {
+	// Check if leader castle is already claimed
+	var hasLeader = false;
+	var robots = robot.getVisibleRobots();
+	
+	for (var i = 0; i < robots.length; i++) {
+		if (robots[i].team === robot.me.team) {
+			var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
+			var robotIsLeader = ((robots[i].castle_talk >>> CASTLE_LEADER_BITSHIFT) & 1) === 1;
+			if (robotIsCastle && robotIsLeader) {
+				hasLeader = true;
+			}
+			// TODO: store x and y positions of castles
+		}
+	}
+	
+	var signal = 0;
+	
+	// Identify as Castle
+	signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
+	
+	// Claim leader if no leader
+	if (!hasLeader) {
+		isLeader = true;
+		signal |= (1 << CASTLE_LEADER_BITSHIFT);
+	}
+	
+	// Broadcast x or y position
+	if (robot.me.turn === 0) {
+		signal |= ((robot.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+	} else if (robot.me.turn === 1) {
+		signal |= ((robot.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+	}
+	robot.castleTalk(signal);
+}
+
 export function castleTurn(robot) {
 	action = undefined;
 	if (!initialized) {
 		initialize(robot);
 	}
+	handleCastleTalk(robot);
 	if (isLeader) {
 		if (unitsBuilt % 2 == 0) {
 			spawnPilgrim(robot);
