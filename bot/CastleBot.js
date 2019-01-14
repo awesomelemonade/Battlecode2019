@@ -142,7 +142,7 @@ function handleCastleTalk(robot) {
 	var robots = robot.getVisibleRobots();
 	
 	for (var i = 0; i < robots.length; i++) {
-		if (robots[i].team === robot.me.team) {
+		if (robots[i].team === robot.me.team && robots[i].id !== robot.me.id) {
 			var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
 			var robotIsLeader = ((robots[i].castle_talk >>> CASTLE_LEADER_BITSHIFT) & 1) === 1;
 			if (robotIsCastle && robotIsLeader) {
