@@ -41,21 +41,21 @@ export function prophetTurn(c) {
 		// We see at least 1 enemy
 		var bestEnemey = null;
 		var bestEnemyPosition = null;
-		var bestEnemyIsStructure = true;
+		var bestEnemyCanAttack = false;
 		var bestDistanceSquared = 9999999; // Arbitrary Large Number
 		for (var i = 0; i < visibleEnemies.length; i++) {
 			var enemy = visibleEnemies[i];
 			var enemyPosition = Vector.ofRobotPosition(enemy);
 			var distanceSquared = currentPosition.getDistanceSquared(enemyPosition);
 			if (Util.isWithinAttackRange(SPECS.PROPHET, distanceSquared)) {
-				if (bestEnemyIsStructure) {
+				if (!bestEnemyCanAttack) {
 					if (distanceSquared < bestDistanceSquared) {
 						bestEnemy = enemy;
-						bestEnemyPosition = enemyPositoin;
-						bestEnemyIsStructure = (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH);
+						bestEnemyPosition = enemyPosition;
+						bestEnemyCanAttack = !(enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM);
 						bestDistanceSquared = distanceSquared;
 					}
-				} else if (enemy.unit !== SPECS.CASTLE && enemy.unit !== SPECS.CHURCH) {
+				} else if (enemy.unit !== SPECS.CASTLE && enemy.unit !== SPECS.CHURCH && enemy.unit !== SPECS.PILGRIM) {
 					// TODO: prioritize the ones that can attack rather than just distance
 					if (distanceSquared < bestDistanceSquared) {
 						bestEnemy = enemy;
@@ -66,7 +66,7 @@ export function prophetTurn(c) {
 			}
 		}
 		// Sort enemies - Closest robot within attack range, then closest structure within attack range
-		if ((!bestEnemyIsStructure) && bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
+		if (bestEnemyCanAttack && bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
 			// Enemy, that is not the castle or church, can see you
 			// TODO: Alternatively, you can use BFS instead of Dijkstras
 			var costs = [];
@@ -78,14 +78,14 @@ export function prophetTurn(c) {
 			var move = Util.getMove(dijkstras, currentPosition, stop);
 			// TODO: make sure move actually steps out of enemy's vision range
 			if (move.isZero()) {
-				var offset = closestEnemyPosition.subtract(currentPosition);
+				var offset = bestEnemyPosition.subtract(currentPosition);
 				return controller.attack(offset.x, offset.y);
 			} else {
 				return controller.move(move.x, move.y);
 			}
 		} else {
 			// Enemy cannot see you
-			var offset = closestEnemyPosition.subtract(currentPosition);
+			var offset = bestEnemyPosition.subtract(currentPosition);
 			return controller.attack(offset.x, offset.y);
 		}
 	}
