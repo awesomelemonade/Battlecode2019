@@ -10,6 +10,7 @@ export class WrappedController {
 		}
 		this.turnProperties = ["me", "karbonite", "fuel", "last_offer"];
 		this.map = robot.map[0].map((col, i) => robot.map.map(row => row[i]));
+		this.true_map = robot.map[0].map((col, i) => robot.map.map(row => row[i]));
 		this.karbonite_map = robot.karbonite_map[0].map((col, i) => robot.karbonite_map.map(row => row[i]));
 		this.fuel_map = robot.fuel_map[0].map((col, i) => robot.fuel_map.map(row => row[i]));
 		this.robot = robot;

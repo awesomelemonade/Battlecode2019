@@ -66,7 +66,7 @@ function initialize() {
 			start.push(v);
 		}
 	}
-	var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
+	var dijkstras = new Dijkstras(controller.true_map, start, totalMoves, totalMoveCosts);
 	dijkstras.resolve(function(location) {
 		for (var i = 0; i < castlePositions.length; i++) {
 			var position = castlePositions[i];
@@ -93,7 +93,6 @@ function initialize() {
 		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 		resourceOrder.push(temp[i]);
 	}
-	
 	initialized = true;
 }
 
@@ -330,7 +329,7 @@ function handleCastleTalk(controller) {
 				start.push(v);
 			}
 		}
-		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
+		var dijkstras = new Dijkstras(controller.true_map, start, totalMoves, totalMoveCosts);
 		dijkstras.resolve(function(location) {
 			for (var i = 0; i < castlePositions.length; i++) {
 				var position = castlePositions[i];
