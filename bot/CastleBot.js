@@ -48,18 +48,13 @@ function decodeCastleSpawnType(int code) {
 var castlePositions = [];
 var enemyPredictions = [];
 
-var castleKarboniteOrders = [];
-var castleFuelOrders = [];
-var castleResourceOrders = [];
+var karboniteOrder = [];
+var fuelOrder = [];
+var resourceOrder = [];
 
 function initialize(robot) {
 	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
 	var castlePosition = Vector.ofRobotPosition(robot.me);
-	addCastlePosition(castlePosition);
-	initialized = true;
-}
-
-function addCastlePosition(castlePosition) {
 	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 	var start = [];
 	for (var i = 0; i < adjacent.length; i++) {
@@ -68,9 +63,6 @@ function addCastlePosition(castlePosition) {
 			start.push(v);
 		}
 	}
-	var karboniteOrder = [];
-	var fuelOrder = [];
-	var resourceOrder = [];
 	var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 	dijkstras.resolve(function(location) {
 		if (Util.hasKarbonite(location)) {
@@ -89,9 +81,11 @@ function addCastlePosition(castlePosition) {
 		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 		resourceOrder.push(temp[i]);
 	}
-	castleKarboniteOrders.push(karboniteOrder);
-	castleFuelOrders.push(fuelOrder);
-	castleResourceOrders.push(resourceOrder);
+	addCastlePosition(castlePosition);
+	initialized = true;
+}
+
+function addCastlePosition(castlePosition) {
 	castlePositions.push(castlePosition);
 	addEnemyPrediction(castlePosition);
 }
