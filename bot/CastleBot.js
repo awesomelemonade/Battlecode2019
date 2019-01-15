@@ -14,10 +14,11 @@ const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
 
-const CASTLE_SPAWNTYPE_BITSHIFT = 1
+const CASTLE_SPAWN_BITSHIFT = 1;
+const CASTLE_SPAWNTYPE_BITSHIFT = 2;
 const CASTLE_SPAWNTYPE_BITMASK = 0b11; // Pilgrims, Crusaders, Prophets, Preachers
 
-function encodeCastleSpawntype(int unit) {
+function encodeCastleSpawnType(int unit) {
 	if (unit === SPECS.PILGRIM) {
 		return 0;
 	} else if (unit === SPECS.CRUSADER) {
@@ -30,7 +31,7 @@ function encodeCastleSpawntype(int unit) {
 		return -1;
 	}
 }
-function decodeCastleSpawntype(int code) {
+function decodeCastleSpawnType(int code) {
 	if (code === 0) {
 		return SPECS.PILGRIM;
 	} else if (code === 1) {
@@ -47,9 +48,18 @@ function decodeCastleSpawntype(int code) {
 var castlePositions = [];
 var enemyPredictions = [];
 
+var castleKarboniteOrders = [];
+var castleFuelOrders = [];
+var castleResourceOrders = [];
+
 function initialize(robot) {
 	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
 	var castlePosition = Vector.ofRobotPosition(robot.me);
+	addCastlePosition(castlePosition);
+	initialized = true;
+}
+
+function addCastlePosition(castlePosition) {
 	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 	var start = [];
 	for (var i = 0; i < adjacent.length; i++) {
@@ -58,6 +68,9 @@ function initialize(robot) {
 			start.push(v);
 		}
 	}
+	var karboniteOrder = [];
+	var fuelOrder = [];
+	var resourceOrder = [];
 	var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 	dijkstras.resolve(function(location) {
 		if (Util.hasKarbonite(location)) {
@@ -76,9 +89,11 @@ function initialize(robot) {
 		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 		resourceOrder.push(temp[i]);
 	}
+	castleKarboniteOrders.push(karboniteOrder);
+	castleFuelOrders.push(fuelOrder);
+	castleResourceOrders.push(resourceOrder);
 	castlePositions.push(castlePosition);
 	addEnemyPrediction(castlePosition);
-	initialized = true;
 }
 
 function addEnemyPrediction(position) {
@@ -90,17 +105,20 @@ function addEnemyPrediction(position) {
 	}
 }
 
-var karboniteOrder = [];
-var fuelOrder = [];
-var resourceOrder = [];
 var action = undefined;
 
 var totalUnitsBuilt = 0;
 var totalPilgrimsBuilt = 0;
-//var totalCrusadersBuilt = 0;
+var totalCrusadersBuilt = 0;
 var totalProphetsBuilt = 0;
+var totalPreachersBuilt = 0;
+
+var unitToSpawn = null;
 
 function spawnPilgrim(robot) {
+	if (SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_KARBONITE < robot.karbonite || SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_FUEL < robot.fuel) {
+		return false;
+	}
 	if (pilgrimsBuilt < resourceOrder.length) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[pilgrimsBuilt];
@@ -120,6 +138,7 @@ function spawnPilgrim(robot) {
 			robot.signal(Util.encodePosition(resourceOrder[pilgrimsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			pilgrimsBuilt++;
 			unitsBuilt++;
+			unitsToSpawn = SPECS.PILGRIM;
 			return true;
 		} else {
 			robot.log("Unable to spawn pilgrim: " + location + " - " + robot.map[location.x][location.y]);
@@ -157,6 +176,9 @@ function spawnPilgrim(robot) {
 }*/
 
 function spawnProphet(robot) {
+	if (SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_KARBONITE < robot.karbonite || SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_FUEL < robot.fuel) {
+		return false;
+	}
 	if (prophetsBuilt < resourceOrder.length) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[prophetsBuilt];
@@ -176,6 +198,7 @@ function spawnProphet(robot) {
 			robot.signal(Util.encodePosition(resourceOrder[prophetsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
 			prophetsBuilt++;
 			unitsBuilt++;
+			unitsToSpawn = SPECS.PROPHET;
 			return true;
 		} else {
 			robot.log("Unable to spawn prophet: " + location + " - " + robot.map[location.x][location.y]);
@@ -199,11 +222,27 @@ function handleCastleTalk(robot) {
 					xBuffers[robots[i].id] = value;
 				} else if (robots[id].turn === 2) {
 					var newCastlePosition = new Vector(xBuffers[robots[i].id], value);
-					castlePositions.push(newCastlePosition);
-					addEnemyPrediction(newCastlePosition);
+					addCastlePosition(newCastlePosition);
 				} else if (robots[id].turn > 2) {
-					
-					
+					var castleTurn = robots[i].turn;
+					var castleSpawned = ((robots[i].castle_talk >>> CASTLE_SPAWN_BITSHIFT) & 1) === 1;
+					var castleSpawnType = decodeCastleSpawnType((robots[i].castle_talk >>> CASTLE_SPAWNTYPE_BITSHIFT) & CASTLE_SPAWNTYPE_MASK);
+					if (castleSpawned) {
+						// TODO: Remove from fuelOrder, karboniteOrder, and resourceOrder
+						if (castleSpawnType === SPECS.PILGRIM) {
+							pilgrimsBuilt++;
+						}
+						if (castleSpawnType === SPECS.CRUSADER) {
+							crusadersBuilt++;
+						}
+						if (castleSpawnType === SPECS.PROPHET) {
+							prophetsBuilt++;
+						}
+						if (castleSpawnType === SPECS.PREACHER) {
+							preachersBuilt++;
+						}
+						totalUnitsBuilt++;
+					}
 				}
 			}
 		}
@@ -240,7 +279,7 @@ export function castleTurn(robot) {
 			spawnProphet(robot);
 		}
 	} else {
-		
+		spawnPilgrim(robot);
 	}
 	handleCastleTalk(robot);
 	return action;
