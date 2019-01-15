@@ -69,8 +69,8 @@ export function pilgrimTurn(robot) {
 				var tempMove = totalMoves[i];
 				var tempEndPosition = start.add(tempMove);
 				var enemyCanSee = false;
-				for (var i = 0; i < visibleEnemies.length; i++) {
-					var enemy = visibleEnemies[i];
+				for (var j = 0; j < visibleEnemies.length; j++) {
+					var enemy = visibleEnemies[j];
 					var enemyPosition = Vector.ofRobotPosition(enemy);
 					var distanceSquared = tempEndPosition.getDistanceSquared(enemyPosition);
 					if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
@@ -86,6 +86,7 @@ export function pilgrimTurn(robot) {
 			if (bestMove == null) {
 				// Nowhere to kite
 				robot.log("yay im ded");
+				return;
 			} else {
 				// We can kite
 				return robot.move(bestMove.x, bestMove.y);
