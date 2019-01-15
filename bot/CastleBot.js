@@ -14,6 +14,7 @@ const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
 
+var castlePositions = [];
 var enemyPredictions = [];
 
 function initialize(robot) {
@@ -154,6 +155,8 @@ function spawnProphet(robot) {
 	return false;
 }
 
+var xBuffers = {};
+
 function handleCastleTalk(robot) {
 	// Check if leader castle is already claimed
 	var hasLeader = false;
@@ -163,10 +166,21 @@ function handleCastleTalk(robot) {
 		if (robots[i].team === robot.me.team && robots[i].id !== robot.me.id) {
 			var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
 			var robotIsLeader = ((robots[i].castle_talk >>> CASTLE_LEADER_BITSHIFT) & 1) === 1;
+			var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
 			if (robotIsCastle && robotIsLeader) {
 				hasLeader = true;
 			}
 			// TODO: store x and y positions of castles
+			if (robotIsCastle) {
+				if (robots[id].turn === 1) {
+					xBuffers[robots[i].id] = value;
+				}
+				if (robots[id].turn === 2) {
+					var newCastlePosition = new Vector(xBuffers[robots[i].id], value);
+					castlePositions.push(newCastlePosition);
+					addEnemyPrediction(newCastlePosition);
+				}
+			}
 		}
 	}
 	
@@ -182,9 +196,9 @@ function handleCastleTalk(robot) {
 	}
 	
 	// Broadcast x or y position
-	if (robot.me.turn === 0) {
+	if (robot.me.turn === 1) {
 		signal |= ((robot.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-	} else if (robot.me.turn === 1) {
+	} else if (robot.me.turn === 2) {
 		signal |= ((robot.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
 	}
 	robot.castleTalk(signal);
