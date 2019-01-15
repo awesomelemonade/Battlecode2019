@@ -20,11 +20,11 @@ export function decodePosition(encodedPosition) {
 }
 
 export function flipPositionForHorizontallySymmetric(position) {
-	return new Vector(position.x, controller.map[0].length - position.y - 1);
+	return new Library.Vector(position.x, controller.map[0].length - position.y - 1);
 }
 
 export function flipPositionForVerticallySymmetric(position) {
-	return new Vector(controller.map.length - position.x - 1, position.y);
+	return new Library.Vector(controller.map.length - position.x - 1, position.y);
 }
 
 // Pass in boolean array
