@@ -199,6 +199,31 @@ function spawnProphet(controller) {
 		} else {
 			controller.log("Unable to spawn prophet: " + location + " - " + controller.map[location.x][location.y]);
 		}
+	} else {
+		// Rerun dijkstras to account for pilgrims blocking spawn locations
+		var randomEnemyCastle = enemyPredictions[Math.floor(Math.random() * enemyPredictions.length)]; // Select a random enemy castle
+		var location = randomEnemyCastle;
+		var castlePosition = Vector.ofRobotPosition(controller.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
+		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location)); // TODO: could be occupying a pilgrim's resource
+		// Build unit
+		while (!location.equals(dijkstras.prev[location.x][location.y])) {
+			location = dijkstras.prev[location.x][location.y];
+		}
+		if (controller.robot_map[location.x][location.y] === 0) {
+			var offsetX = location.x - controller.me.x;
+			var offsetY = location.y - controller.me.y
+			action = controller.buildUnit(SPECS.PROPHET, offsetX, offsetY); // Face towards target
+			// Radio prophet's target position
+			controller.signal(Util.encodePosition(randomEnemyCastle), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
+			prophetsBuilt++;
+			unitsBuilt++;
+			unitToSpawn = SPECS.PROPHET;
+			return true;
+		} else {
+			controller.log("Unable to spawn prophet: " + location + " - " + controller.map[location.x][location.y]);
+		}
 	}
 	return false;
 }
