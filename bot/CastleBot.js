@@ -14,6 +14,7 @@ const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
 
+var enemyPredictions = [];
 
 function initialize(robot) {
 	// TODO: Figure out best castle to start with
@@ -46,7 +47,18 @@ function initialize(robot) {
 		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 		resourceOrder.push(temp[i]);
 	}
+	// Enemy predictions
+	addEnemyPrediction(castlePosition);
 	initialized = true;
+}
+
+function addEnemyPrediction(position) {
+	if (robot.isHorizontallySymmetric) {
+		enemyPredictions.push(Util.flipPositionForHorizontallySymmmetric(position));
+	}
+	if (robot.isVerticallySymmetric) {
+		enemyPredictions.push(Util.flipPositionForVerticallySymmetric(position));
+	}
 }
 
 var karboniteOrder = [];

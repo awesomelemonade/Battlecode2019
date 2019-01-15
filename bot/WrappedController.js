@@ -16,6 +16,12 @@ export class WrappedController {
 		this.castles = {};
 		this.churches = {};
 		this.units = {};
+		this.isHorizontallySymmetric = Util.isHorizontallySymmetric(this.map) && 
+				Util.isHorizontallySymmetric(this.karbonite_map) && 
+				Util.isHorizontallySymmetric(this.fuel_map);
+		this.isVerticallySymmetric = Util.isVerticallySymmetric(this.map) && 
+				Util.isVerticallySymmetric(this.karbonite_map) && 
+				Util.isVerticallySymmetric(this.fuel_map);
 	}
 	turn() {
 		for (var i = 0; i < this.turnProperties.length; i++) {
