@@ -58,6 +58,42 @@ function initialize() {
 	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
 	var castlePosition = Vector.ofRobotPosition(controller.me);
 	addCastlePosition(castlePosition);
+	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+		var start = [];
+		for (var i = 0; i < adjacent.length; i++) {
+			var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
+			if ((!Util.outOfBounds(v)) && controller.map[v.x][v.y] === true) { // Check if passable
+				start.push(v);
+			}
+		}
+		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
+		dijkstras.resolve(function(location) {
+			for (var i = 0; i < castlePositions.length; i++) {
+				var position = castlePositions[i];
+				if (position.equals(castlePosition)) { // It's our own castle
+					continue;
+				}
+				if (position.getDistanceSquared(location) <= 5) {
+					return false;
+				}
+			}
+			if (Util.hasKarbonite(location)) {
+				karboniteOrder.push(location);
+			}
+			if (Util.hasFuel(location)) {
+				fuelOrder.push(location);
+			}
+			return false; // Never trigger the stop condition
+		});
+		for (var i = 0; i < Math.min(karboniteOrder.length, fuelOrder.length); i++) {
+			resourceOrder.push(karboniteOrder[i]);
+			resourceOrder.push(fuelOrder[i]);
+		}
+		for (var i = Math.min(karboniteOrder.length, fuelOrder.length); i < Math.max(karboniteOrder.length, fuelOrder.length); i++) {
+			var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
+			resourceOrder.push(temp[i]);
+		}
+	
 	initialized = true;
 }
 
@@ -89,7 +125,7 @@ function spawnPilgrim(controller) {
 	if (controller.karbonite < SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_KARBONITE || controller.fuel < SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_FUEL) {
 		return false;
 	}
-	if (pilgrimsBuilt < (resourceOrder.length*0.75)+1)) {
+	if (pilgrimsBuilt < ((resourceOrder.length * 0.75) + 1)) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[pilgrimsBuilt];
 		var castlePosition = Vector.ofRobotPosition(controller.me);
@@ -281,6 +317,9 @@ function handleCastleTalk(controller) {
 		signal |= ((controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
 	} else if (controller.me.turn === 3) {
 		castlePositionsInitialized = true;
+		karboniteOrder = [];
+		fuelOrder = [];
+		resourceOrder = [];
 		// Run Dijkstras on all castle positions to figure out resourceOrder
 		var castlePosition = Vector.ofRobotPosition(controller.me);
 		const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
