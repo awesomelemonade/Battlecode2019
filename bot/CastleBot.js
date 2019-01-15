@@ -4,22 +4,50 @@ import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 
 var initialized = false;
-var isLeader = false;
+var castlePositionsInitialized = false;
 
 // Use r.turn to differentiate castle vs other units?
 // castle_talk among castles for the first few turns - 8 bits
 const CASTLE_IDENTIFIER_BITSHIFT = 0; // Differentiate Castle and other units
-const CASTLE_LEADER_BITSHIFT = 1; // Temporary leader identification system
+const CASTLE_UNUSED_BITSHIFT = 1; // Previously: Temporary leader identification system
 const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
+
+const CASTLE_SPAWNTYPE_BITSHIFT = 1
+const CASTLE_SPAWNTYPE_BITMASK = 0b11; // Pilgrims, Crusaders, Prophets, Preachers
+
+function encodeCastleSpawntype(int unit) {
+	if (unit === SPECS.PILGRIM) {
+		return 0;
+	} else if (unit === SPECS.CRUSADER) {
+		return 1;
+	} else if (unit === SPECS.PROPHET) {
+		return 2;
+	} else if (unit === SEPCS.PREACHER) {
+		return 3;
+	} else {
+		return -1;
+	}
+}
+function decodeCastleSpawntype(int code) {
+	if (code === 0) {
+		return SPECS.PILGRIM;
+	} else if (code === 1) {
+		return SPECS.CRUSADER;
+	} else if (code === 2) {
+		return SPECS.PROPHET;
+	} else if (code === 3) {
+		return SPECS.PREACHER;
+	} else {
+		return -1;
+	}
+}
 
 var castlePositions = [];
 var enemyPredictions = [];
 
 function initialize(robot) {
-	// TODO: Figure out best castle to start with
-	
 	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
 	var castlePosition = Vector.ofRobotPosition(robot.me);
 	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
@@ -48,7 +76,7 @@ function initialize(robot) {
 		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 		resourceOrder.push(temp[i]);
 	}
-	// Enemy predictions
+	castlePositions.push(castlePosition);
 	addEnemyPrediction(castlePosition);
 	initialized = true;
 }
@@ -67,10 +95,10 @@ var fuelOrder = [];
 var resourceOrder = [];
 var action = undefined;
 
-var unitsBuilt = 0;
-var pilgrimsBuilt = 0;
-var crusadersBuilt = 0;
-var prophetsBuilt = 0;
+var totalUnitsBuilt = 0;
+var totalPilgrimsBuilt = 0;
+//var totalCrusadersBuilt = 0;
+var totalProphetsBuilt = 0;
 
 function spawnPilgrim(robot) {
 	if (pilgrimsBuilt < resourceOrder.length) {
@@ -99,7 +127,8 @@ function spawnPilgrim(robot) {
 	}
 	return false;
 }
-function spawnCrusader(robot) {
+
+/*function spawnCrusader(robot) {
 	if (crusadersBuilt < resourceOrder.length) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[crusadersBuilt];
@@ -125,7 +154,7 @@ function spawnCrusader(robot) {
 		}
 	}
 	return false;
-}
+}*/
 
 function spawnProphet(robot) {
 	if (prophetsBuilt < resourceOrder.length) {
@@ -158,27 +187,23 @@ function spawnProphet(robot) {
 var xBuffers = {};
 
 function handleCastleTalk(robot) {
-	// Check if leader castle is already claimed
-	var hasLeader = false;
 	var robots = robot.getVisibleRobots();
 	
 	for (var i = 0; i < robots.length; i++) {
 		if (robots[i].team === robot.me.team && robots[i].id !== robot.me.id) {
 			var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
-			var robotIsLeader = ((robots[i].castle_talk >>> CASTLE_LEADER_BITSHIFT) & 1) === 1;
+			var robotUnusedBit = ((robots[i].castle_talk >>> CASTLE_UNUSED_BITSHIFT) & 1) === 1;
 			var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
-			if (robotIsCastle && robotIsLeader) {
-				hasLeader = true;
-			}
-			// TODO: store x and y positions of castles
 			if (robotIsCastle) {
 				if (robots[id].turn === 1) {
 					xBuffers[robots[i].id] = value;
-				}
-				if (robots[id].turn === 2) {
+				} else if (robots[id].turn === 2) {
 					var newCastlePosition = new Vector(xBuffers[robots[i].id], value);
 					castlePositions.push(newCastlePosition);
 					addEnemyPrediction(newCastlePosition);
+				} else if (robots[id].turn > 2) {
+					
+					
 				}
 			}
 		}
@@ -189,17 +214,14 @@ function handleCastleTalk(robot) {
 	// Identify as Castle
 	signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
 	
-	// Claim leader if no leader
-	if (!hasLeader) {
-		isLeader = true;
-		signal |= (1 << CASTLE_LEADER_BITSHIFT);
-	}
-	
 	// Broadcast x or y position
 	if (robot.me.turn === 1) {
 		signal |= ((robot.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
 	} else if (robot.me.turn === 2) {
 		signal |= ((robot.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+	} else if (robot.me.turn === 3) {
+		castlePositionsInitialized = true;
+		// Run Dijkstras on all castle positions to figure out resourceOrder
 	}
 	robot.castleTalk(signal);
 }
@@ -209,8 +231,7 @@ export function castleTurn(robot) {
 	if (!initialized) {
 		initialize(robot);
 	}
-	handleCastleTalk(robot);
-	if (isLeader) {
+	if (castlePositionsInitialized) {
 		if (unitsBuilt % 2 == 0) {
 			if (!spawnPilgrim(robot)) {
 				spawnProphet(robot);
@@ -218,6 +239,9 @@ export function castleTurn(robot) {
 		} else {
 			spawnProphet(robot);
 		}
+	} else {
+		
 	}
+	handleCastleTalk(robot);
 	return action;
 }
