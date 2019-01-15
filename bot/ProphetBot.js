@@ -92,6 +92,9 @@ export function prophetTurn(c) {
 					var enemyCanSee = false;
 					for (var j = 0; j < visibleEnemies.length; j++) {
 						var enemy = visibleEnemies[j];
+						if (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM) {
+							continue;
+						}
 						var enemyPosition = Vector.ofRobotPosition(enemy);
 						var distanceSquared = endPosition.getDistanceSquared(enemyPosition);
 						if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
@@ -126,6 +129,9 @@ export function prophetTurn(c) {
 				var enemyCanSee = false;
 				for (var j = 0; j < visibleEnemies.length; j++) {
 					var enemy = visibleEnemies[j];
+					if (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM) {
+						continue;
+					}
 					var enemyPosition = Vector.ofRobotPosition(enemy);
 					var distanceSquared = endPosition.getDistanceSquared(enemyPosition);
 					if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
