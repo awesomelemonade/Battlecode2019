@@ -110,7 +110,7 @@ export function prophetTurn(c) {
 					return controller.attack(offset.x, offset.y);
 				} else {
 					// We can kite
-					controller.move(bestMove.x, bestMove.y);
+					return controller.move(bestMove.x, bestMove.y);
 				}
 			} else {
 				var offset = bestEnemyPosition.subtract(currentPosition);
@@ -151,7 +151,7 @@ export function prophetTurn(c) {
 					return controller.move(move.x, move.y);
 				}
 			} else {
-				controller.move(bestMove.x, bestMove.y);
+				return controller.move(bestMove.x, bestMove.y);
 			}
 		}
 	}

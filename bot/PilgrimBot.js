@@ -88,7 +88,7 @@ export function pilgrimTurn(robot) {
 				robot.log("yay im ded");
 			} else {
 				// We can kite
-				controller.move(bestMove.x, bestMove.y);
+				return robot.move(bestMove.x, bestMove.y);
 			}
 		} else {
 			if (move.isZero()) {
