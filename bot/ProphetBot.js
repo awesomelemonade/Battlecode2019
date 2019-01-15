@@ -23,7 +23,6 @@ var target = null;
 
 export function prophetTurn(c) {
 	controller = c;
-	controller.log("A Prophet Turn");
 	if (!initialized) {
 		init();
 	}
@@ -39,7 +38,7 @@ export function prophetTurn(c) {
 		}
 	} else {
 		// We see at least 1 enemy
-		var bestEnemey = null;
+		var bestEnemy = null;
 		var bestEnemyPosition = null;
 		var bestEnemyCanAttack = false;
 		var bestDistanceSquared = 9999999; // Arbitrary Large Number
@@ -65,10 +64,31 @@ export function prophetTurn(c) {
 				}
 			}
 		}
-		// Sort enemies - Closest robot within attack range, then closest structure within attack range
-		if (bestEnemyCanAttack && bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
-			// Enemy, that is not the castle or church, can see you
-			// TODO: Alternatively, you can use BFS instead of Dijkstras
+		if (bestEnemy != null) {
+			// Sort enemies - Closest robot within attack range, then closest structure within attack range
+			if (bestEnemyCanAttack && bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
+				// Enemy, that is not the castle or church, can see you
+				// TODO: Alternatively, you can use BFS instead of Dijkstras
+				var costs = [];
+				for (var j = 0; j < totalMoves.length; j++) {
+					costs.push(1);
+				}
+				var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
+				var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
+				var move = Util.getMove(dijkstras, currentPosition, stop);
+				// TODO: make sure move actually steps out of enemy's vision range
+				if (move.isZero()) {
+					var offset = bestEnemyPosition.subtract(currentPosition);
+					return controller.attack(offset.x, offset.y);
+				} else {
+					return controller.move(move.x, move.y);
+				}
+			} else {
+				// Enemy cannot see you
+				var offset = bestEnemyPosition.subtract(currentPosition);
+				return controller.attack(offset.x, offset.y);
+			}
+		} else {
 			var costs = [];
 			for (var j = 0; j < totalMoves.length; j++) {
 				costs.push(1);
@@ -76,17 +96,9 @@ export function prophetTurn(c) {
 			var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
 			var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
 			var move = Util.getMove(dijkstras, currentPosition, stop);
-			// TODO: make sure move actually steps out of enemy's vision range
-			if (move.isZero()) {
-				var offset = bestEnemyPosition.subtract(currentPosition);
-				return controller.attack(offset.x, offset.y);
-			} else {
+			if (!move.isZero()) {
 				return controller.move(move.x, move.y);
 			}
-		} else {
-			// Enemy cannot see you
-			var offset = bestEnemyPosition.subtract(currentPosition);
-			return controller.attack(offset.x, offset.y);
 		}
 	}
 	
