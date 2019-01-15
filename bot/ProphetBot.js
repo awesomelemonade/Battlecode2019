@@ -66,9 +66,10 @@ export function prophetTurn(c) {
 		}
 		if (bestEnemy != null) {
 			// Sort enemies - Closest robot within attack range, then closest structure within attack range
-			if (bestEnemyCanAttack && bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
-				// Enemy, that is not the castle or church, can see you
-				// TODO: Alternatively, you can use BFS instead of Dijkstras
+			if (bestEnemyCanAttack && bestEnemy.unit !== SPECS.PROPHET &&
+					bestDistanceSquared <= SPECS.UNITS[bestEnemy.unit].VISION_RADIUS) {
+				// Enemies, that are not the castle, church, pilgrim, or prophet, can see you
+				/*// TODO: Alternatively, you can use BFS instead of Dijkstras
 				var costs = [];
 				for (var j = 0; j < totalMoves.length; j++) {
 					costs.push(1);
@@ -82,22 +83,75 @@ export function prophetTurn(c) {
 					return controller.attack(offset.x, offset.y);
 				} else {
 					return controller.move(move.x, move.y);
+				}*/
+				// Loop through all moves
+				var bestMove = null;
+				for (var i = 0; i < totalMoves.length; i++) {
+					var move = totalMoves[i];
+					var endPosition = currentPosition.add(move);
+					var enemyCanSee = false;
+					for (var i = 0; i < visibleEnemies.length; i++) {
+						var enemy = visibleEnemies[i];
+						var enemyPosition = Vector.ofRobotPosition(enemy);
+						var distanceSquared = endPosition.getDistanceSquared(enemyPosition);
+						if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+							enemyCanSee = true;
+							break;
+						}
+					}
+					if (!enemyCanSee) {
+						bestMove = move;
+						break;
+					}
+				}
+				if (bestMove == null) {
+					// Nowhere to kite - just attack instead
+					var offset = bestEnemyPosition.subtract(currentPosition);
+					return controller.attack(offset.x, offset.y);
+				} else {
+					// We can kite
+					controller.move(bestMove.x, bestMove.y);
 				}
 			} else {
-				// Enemy cannot see you
 				var offset = bestEnemyPosition.subtract(currentPosition);
 				return controller.attack(offset.x, offset.y);
 			}
 		} else {
-			var costs = [];
-			for (var j = 0; j < totalMoves.length; j++) {
-				costs.push(1);
+			// We see at least 1 enemy, but none of them are in our attack range (too close!)
+			// Try kiting away
+			var bestMove = null;
+			for (var i = 0; i < totalMoves.length; i++) {
+				var move = totalMoves[i];
+				var endPosition = currentPosition.add(move);
+				var enemyCanSee = false;
+				for (var i = 0; i < visibleEnemies.length; i++) {
+					var enemy = visibleEnemies[i];
+					var enemyPosition = Vector.ofRobotPosition(enemy);
+					var distanceSquared = endPosition.getDistanceSquared(enemyPosition);
+					if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+						enemyCanSee = true;
+						break;
+					}
+				}
+				if (!enemyCanSee) {
+					bestMove = move;
+					break;
+				}
 			}
-			var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
-			var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
-			var move = Util.getMove(dijkstras, currentPosition, stop);
-			if (!move.isZero()) {
-				return controller.move(move.x, move.y);
+			if (bestMove == null) {
+				// Nowhere to kite - try moving to target
+				var costs = [];
+				for (var j = 0; j < totalMoves.length; j++) {
+					costs.push(1);
+				}
+				var dijkstras = new Dijkstras(controller.map, currentPosition, totalMoves, costs);
+				var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(target) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
+				var move = Util.getMove(dijkstras, currentPosition, stop);
+				if (!move.isZero()) {
+					return controller.move(move.x, move.y);
+				}
+			} else {
+				controller.move(bestMove.x, bestMove.y);
 			}
 		}
 	}
