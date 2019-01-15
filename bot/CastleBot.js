@@ -59,40 +59,40 @@ function initialize() {
 	var castlePosition = Vector.ofRobotPosition(controller.me);
 	addCastlePosition(castlePosition);
 	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-		var start = [];
-		for (var i = 0; i < adjacent.length; i++) {
-			var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
-			if ((!Util.outOfBounds(v)) && controller.map[v.x][v.y] === true) { // Check if passable
-				start.push(v);
+	var start = [];
+	for (var i = 0; i < adjacent.length; i++) {
+		var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
+		if ((!Util.outOfBounds(v)) && controller.map[v.x][v.y] === true) { // Check if passable
+			start.push(v);
+		}
+	}
+	var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
+	dijkstras.resolve(function(location) {
+		for (var i = 0; i < castlePositions.length; i++) {
+			var position = castlePositions[i];
+			if (position.equals(castlePosition)) { // It's our own castle
+				continue;
+			}
+			if (position.getDistanceSquared(location) <= 5) {
+				return false;
 			}
 		}
-		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
-		dijkstras.resolve(function(location) {
-			for (var i = 0; i < castlePositions.length; i++) {
-				var position = castlePositions[i];
-				if (position.equals(castlePosition)) { // It's our own castle
-					continue;
-				}
-				if (position.getDistanceSquared(location) <= 5) {
-					return false;
-				}
-			}
-			if (Util.hasKarbonite(location)) {
-				karboniteOrder.push(location);
-			}
-			if (Util.hasFuel(location)) {
-				fuelOrder.push(location);
-			}
-			return false; // Never trigger the stop condition
-		});
-		for (var i = 0; i < Math.min(karboniteOrder.length, fuelOrder.length); i++) {
-			resourceOrder.push(karboniteOrder[i]);
-			resourceOrder.push(fuelOrder[i]);
+		if (Util.hasKarbonite(location)) {
+			karboniteOrder.push(location);
 		}
-		for (var i = Math.min(karboniteOrder.length, fuelOrder.length); i < Math.max(karboniteOrder.length, fuelOrder.length); i++) {
-			var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
-			resourceOrder.push(temp[i]);
+		if (Util.hasFuel(location)) {
+			fuelOrder.push(location);
 		}
+		return false; // Never trigger the stop condition
+	});
+	for (var i = 0; i < Math.min(karboniteOrder.length, fuelOrder.length); i++) {
+		resourceOrder.push(karboniteOrder[i]);
+		resourceOrder.push(fuelOrder[i]);
+	}
+	for (var i = Math.min(karboniteOrder.length, fuelOrder.length); i < Math.max(karboniteOrder.length, fuelOrder.length); i++) {
+		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
+		resourceOrder.push(temp[i]);
+	}
 	
 	initialized = true;
 }
