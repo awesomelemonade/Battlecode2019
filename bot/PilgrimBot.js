@@ -45,18 +45,61 @@ export function pilgrimTurn(robot) {
 			return robot.move(move.x, move.y);
 		}
 	} else {
+		var visibleEnemies = Util.getVisibleEnemies();
 		var start = Vector.ofRobotPosition(robot.me);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(isOnTarget);
 		var move = Util.getMove(dijkstras, start, stop);
-		if (move.isZero()) {
-			if (Util.hasResource(start)) {
-				return robot.mine();
+		var endPosition = start.add(move);
+		var enemyCanSeeEndPosition = false;
+		for (var i = 0; i < visibleEnemies.length; i++) {
+			var enemy = visibleEnemies[i];
+			var enemyPosition = Vector.ofRobotPosition(enemy);
+			var distanceSquared = endPosition.getDistanceSquared(enemyPosition);
+			if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+				enemyCanSeeEndPosition = true;
+				break;
+			}
+		}
+		if (enemyCanSeeEndPosition) {
+			// Try to "kite"
+			// Loop through all moves
+			var bestMove = null;
+			for (var i = 0; i < totalMoves.length; i++) {
+				var tempMove = totalMoves[i];
+				var tempEndPosition = start.add(tempMove);
+				var enemyCanSee = false;
+				for (var i = 0; i < visibleEnemies.length; i++) {
+					var enemy = visibleEnemies[i];
+					var enemyPosition = Vector.ofRobotPosition(enemy);
+					var distanceSquared = tempEndPosition.getDistanceSquared(enemyPosition);
+					if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+						enemyCanSee = true;
+						break;
+					}
+				}
+				if (!enemyCanSee) {
+					bestMove = tempMove;
+					break;
+				}
+			}
+			if (bestMove == null) {
+				// Nowhere to kite
+				robot.log("yay im ded");
 			} else {
-				robot.log("Doing Nothing? " + start);
+				// We can kite
+				controller.move(bestMove.x, bestMove.y);
 			}
 		} else {
-			return robot.move(move.x, move.y);
+			if (move.isZero()) {
+				if (Util.hasResource(start)) {
+					return robot.mine();
+				} else {
+					robot.log("Doing Nothing? " + start);
+				}
+			} else {
+				return robot.move(move.x, move.y);
+			}
 		}
 	}
 }
