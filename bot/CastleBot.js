@@ -89,7 +89,7 @@ function spawnPilgrim(controller) {
 	if (controller.karbonite < SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_KARBONITE || controller.fuel < SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_FUEL) {
 		return false;
 	}
-	if (pilgrimsBuilt < resourceOrder.length) {
+	if (pilgrimsBuilt < (resourceOrder.length*0.75)+1)) {
 		// Rerun dijkstras to account for pilgrims blocking spawn locations
 		var location = resourceOrder[pilgrimsBuilt];
 		var castlePosition = Vector.ofRobotPosition(controller.me);
@@ -330,7 +330,7 @@ export function castleTurn(r) {
 	}
 	handleCastleTalk(r);
 	if (castlePositionsInitialized) {
-		if (unitsBuilt % 2 == 0) {
+		if (unitsBuilt % 2 == 0 && unitsBuilt % 5 != 4) {
 			if (!spawnPilgrim(r)) {
 				spawnProphet(r);
 			}
