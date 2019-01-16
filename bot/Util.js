@@ -150,3 +150,13 @@ export function isWithinAttackRange(unitType, distanceSquared) {
 	var attackRadius = SPECS.UNITS[unitType].ATTACK_RADIUS;
 	return distanceSquared >= attackRadius[0] && distanceSquared <= attackRadius[1];
 }
+
+
+export function findIndex(array, value) {
+	for (var i = 0; i < array.length; i++) {
+		if (array[i] === value) {
+			return i;
+		}
+	}
+	return -1;
+}
