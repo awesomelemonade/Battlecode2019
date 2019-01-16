@@ -26,6 +26,40 @@ export function pilgrimTurn(robot) {
 		var start = Vector.ofRobotPosition(robot.me);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(Util.isNextToCastleOrChurch);
+		if (stop === undefined) {
+			// Try to "kite"
+			// Loop through all moves
+			var bestMove = null;
+			for (var i = 0; i < totalMoves.length; i++) {
+				var tempMove = totalMoves[i];
+				var tempEndPosition = start.add(tempMove);
+				var enemyCanSee = false;
+				for (var j = 0; j < visibleEnemies.length; j++) {
+					var enemy = visibleEnemies[j];
+					if (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM) {
+						continue;
+					}
+					var enemyPosition = Vector.ofRobotPosition(enemy);
+					var distanceSquared = tempEndPosition.getDistanceSquared(enemyPosition);
+					if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+						enemyCanSee = true;
+						break;
+					}
+				}
+				if (!enemyCanSee) {
+					bestMove = tempMove;
+					break;
+				}
+			}
+			if (bestMove == null) {
+				// Nowhere to kite
+				robot.log("yay im ded");
+				return;
+			} else {
+				// We can kite
+				return robot.move(bestMove.x, bestMove.y);
+			}
+		}
 		var move = Util.getMove(dijkstras, start, stop);
 		if (move.isZero()) {
 			const adjacent = Util.getAdjacent(start);
@@ -49,6 +83,40 @@ export function pilgrimTurn(robot) {
 		var start = Vector.ofRobotPosition(robot.me);
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(isOnTarget);
+		if (stop === undefined) {
+			// Try to "kite"
+			// Loop through all moves
+			var bestMove = null;
+			for (var i = 0; i < totalMoves.length; i++) {
+				var tempMove = totalMoves[i];
+				var tempEndPosition = start.add(tempMove);
+				var enemyCanSee = false;
+				for (var j = 0; j < visibleEnemies.length; j++) {
+					var enemy = visibleEnemies[j];
+					if (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM) {
+						continue;
+					}
+					var enemyPosition = Vector.ofRobotPosition(enemy);
+					var distanceSquared = tempEndPosition.getDistanceSquared(enemyPosition);
+					if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+						enemyCanSee = true;
+						break;
+					}
+				}
+				if (!enemyCanSee) {
+					bestMove = tempMove;
+					break;
+				}
+			}
+			if (bestMove == null) {
+				// Nowhere to kite
+				robot.log("yay im ded");
+				return;
+			} else {
+				// We can kite
+				return robot.move(bestMove.x, bestMove.y);
+			}
+		}
 		var move = Util.getMove(dijkstras, start, stop);
 		var endPosition = start.add(move);
 		var enemyCanSeeEndPosition = false;
