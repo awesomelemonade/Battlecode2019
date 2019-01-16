@@ -93,8 +93,6 @@ function initialize() {
 		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 		resourceOrder.push(temp[i]);
 	}
-	
-	controller.log("Before: " + resourceOrder);
 	initialized = true;
 }
 
@@ -336,7 +334,6 @@ function handleCastleTalk(controller) {
 				}
 			}
 		}
-		controller.log("After: " + resourceOrder);
 	}
 	controller.castleTalk(signal);
 }
