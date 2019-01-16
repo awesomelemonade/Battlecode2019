@@ -27,6 +27,7 @@ export function pilgrimTurn(robot) {
 		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(Util.isNextToCastleOrChurch);
 		if (stop === undefined) {
+			var visibleEnemies = Util.getVisibleEnemies();
 			// Try to "kite"
 			// Loop through all moves
 			var bestMove = null;
