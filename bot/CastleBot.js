@@ -353,6 +353,12 @@ export function castleTurn(r) {
 		} else {
 			spawnProphet(r);
 		}
+		if (action === undefined) {
+			if (controller.fuel > 10000) {
+				var randomEnemyCastle = enemyPredictions[Math.floor(Math.random() * enemyPredictions.length)]; // Select a random enemy castle
+				controller.signal(Util.encodePosition(randomEnemyCastle), 5000);
+			}
+		}
 	} else {
 		spawnPilgrim(r);
 	}

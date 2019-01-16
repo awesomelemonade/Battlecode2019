@@ -26,6 +26,25 @@ export function prophetTurn(c) {
 	if (!initialized) {
 		init();
 	}
+	// Check if castle broadcasted target
+	if (target === null || (!Util.hasResource(target))) {
+		var robots = controller.getVisibleRobots();
+		for (var i = 0; i < robots.length; i++) {
+			var r = robots[i];
+			if (r.team !== controller.me.team) {
+				continue;
+			}
+			if (!controller.isRadioing(c)) {
+				continue;
+			}
+			if (r.signal_radius === 5000) {
+				target = Util.decodePosition(r.signal);
+				controller.log("we're rushin: " + target);
+			}
+		}
+	}
+	
+	
 	var currentPosition = Vector.ofRobotPosition(controller.me);
 	var visibleEnemies = Util.getVisibleEnemies();
 	if (visibleEnemies.length === 0) {
