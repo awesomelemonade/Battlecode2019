@@ -324,14 +324,12 @@ function handleCastleTalk(controller) {
 		
 		for (var i = 0; i < resourceOrder.length; i++) {
 			var resourcePosition = resourceOrder[i];
-			controller.log("Checking: " + resourcePosition);
 			for (var j = 0; j < castlePositions.length; j++) {
 				var position = castlePositions[j];
 				if (position.equals(castlePosition)) { // It's our own castle
 					continue;
 				}
 				if (position.getDistanceSquared(resourcePosition) <= 5) {
-					controller.log("Removing...");
 					resourceOrder.splice(i, 1);
 					i--;
 					break;
