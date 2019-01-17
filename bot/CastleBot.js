@@ -3,10 +3,8 @@ import * as Util from './Util';
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 
-var controller = null;
-
-var initialized = false;
-var castlePositionsInitialized = false;
+// Castles & Churches must not have overlapping responsible tiles
+const responsibleDistance = 5; // Must be less than church's vision radius to detect dead pilgrims & defenders
 
 // Use r.turn to differentiate castle vs other units?
 // castle_talk among castles for the first few turns - 8 bits
@@ -19,6 +17,68 @@ const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 const CASTLE_SPAWN_BITSHIFT = 1;
 const CASTLE_SPAWNTYPE_BITSHIFT = 2;
 const CASTLE_SPAWNTYPE_BITMASK = 0b11; // Pilgrims, Crusaders, Prophets, Preachers
+
+export class CastleBot {
+	constructor(controller) {
+		this.controller = controller;
+		// Castle variables
+		this.castlePositionsInitialized = false;
+		this.castlePositions = [];
+		this.structurePositions = [];
+		this.enemyCastlePredictions = [];
+		// Init
+		this.init();
+	}
+	function init() {
+		// Church variables (Castle is church + extra)
+		this.resourceOrder = [];
+		// This following system limits 1 pilgrim and 1 defender per resource
+		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
+		this.defenders = []; // Stores id or -1, indices correspond with resourceOrder
+		this.pilgrimsAlive = 0;
+		this.defendersAlive = 0;
+		// Calculate resourceOrder - resourceOrder should not change after construction
+		
+	}
+	function turn() {
+		if (!castlePositionsInitialized) {
+			// spawn pilgrims for resourceOrder
+			// castle talk for castle positions
+		} else {
+			// doChurchPilgrimAndDefenderBuilding();
+			// if (alreadySpawnedPilgrimOrDefender) return;
+			// TODO: Should churches be able to setup a pilgrim to build churches
+			// castle talk "progress" in creating pilgrims/defenders
+			// retrieve castle talks from all units to calculate totalProgress
+			// TODO: Figure out the way to decide "itIsThisCastleThatShouldBuildTheChurch"
+			// if (totalProgress > arbitraryThreshold && itIsThisCastleThatShouldBuildTheChurch) {
+			// 		queue a castle talk for a church to be built
+			//		spawn a pilgrim
+			//		send a signal to the pilgrim to build a church
+			// }
+			// for (go through the queue) {
+			// 		execute castleTalk
+			// }
+		}
+	}
+	function addChurchPosition(churchPosition) {
+		this.structurePositions.push(churchPosition);
+	}
+	function addCastlePosition(castlePosition) {
+		this.castlePositions.push(castlePosition);
+		this.structurePositions.push(castlePosition);
+		this.addEnemyPrediction(castlePosition);
+	}
+	function addEnemyPrediction(position) {
+		if (this.controller.isHorizontallySymmetric) {
+			this.enemyPredictions.push(Util.flipPositionForHorizontallySymmetric(position));
+		}
+		if (this.controller.isVerticallySymmetric) {
+			this.enemyPredictions.push(Util.flipPositionForVerticallySymmetric(position));
+		}
+	}
+}
+
 
 function encodeCastleSpawnType(unit) {
 	if (unit === SPECS.PILGRIM) {
@@ -46,13 +106,6 @@ function decodeCastleSpawnType(code) {
 		return -1;
 	}
 }
-
-var castlePositions = [];
-var enemyPredictions = [];
-
-var karboniteOrder = [];
-var fuelOrder = [];
-var resourceOrder = [];
 
 function initialize() {
 	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
@@ -94,173 +147,6 @@ function initialize() {
 		resourceOrder.push(temp[i]);
 	}
 	initialized = true;
-}
-
-function addCastlePosition(castlePosition) {
-	castlePositions.push(castlePosition);
-	addEnemyPrediction(castlePosition);
-}
-
-function addEnemyPrediction(position) {
-	if (controller.isHorizontallySymmetric) {
-		enemyPredictions.push(Util.flipPositionForHorizontallySymmetric(position));
-	}
-	if (controller.isVerticallySymmetric) {
-		enemyPredictions.push(Util.flipPositionForVerticallySymmetric(position));
-	}
-}
-
-var action = undefined;
-
-var unitsBuilt = 0;
-var pilgrimsBuilt = 0;
-var crusadersBuilt = 0;
-var prophetsBuilt = 0;
-var preachersBuilt = 0;
-
-var unitToSpawn = null;
-
-function spawnPilgrim(controller) {
-	if (controller.karbonite < SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_KARBONITE || controller.fuel < SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_FUEL) {
-		return false;
-	}
-	if (pilgrimsBuilt < ((resourceOrder.length * 0.75) + 1)) {
-		// Rerun dijkstras to account for pilgrims blocking spawn locations
-		var location = resourceOrder[pilgrimsBuilt];
-		var castlePosition = Vector.ofRobotPosition(controller.me);
-		var start = Util.getAdjacentPassable(castlePosition);
-		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
-		dijkstras.resolve((vector) => vector.equals(location));
-		// Build unit
-		while (!location.equals(dijkstras.prev[location.x][location.y])) {
-			location = dijkstras.prev[location.x][location.y];
-		}
-		if (controller.robot_map[location.x][location.y] === 0) {
-			var offsetX = location.x - controller.me.x;
-			var offsetY = location.y - controller.me.y
-			action = controller.buildUnit(SPECS.PILGRIM, offsetX, offsetY); // Face towards target
-			// Radio pilgrim's target position
-			controller.signal(Util.encodePosition(resourceOrder[pilgrimsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
-			pilgrimsBuilt++;
-			unitsBuilt++;
-			unitToSpawn = SPECS.PILGRIM;
-			return true;
-		} else {
-			controller.log("Unable to spawn pilgrim: " + location + " - " + controller.map[location.x][location.y]);
-		}
-	}
-	return false;
-}
-
-/*function spawnCrusader(robot) {
-	if (crusadersBuilt < resourceOrder.length) {
-		// Rerun dijkstras to account for pilgrims blocking spawn locations
-		var location = resourceOrder[crusadersBuilt];
-		var castlePosition = Vector.ofRobotPosition(robot.me);
-		var start = Util.getAdjacentPassable(castlePosition);
-		var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
-		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location)); // TODO: could be occupying a pilgrim's resource
-		// Build unit
-		while (!location.equals(dijkstras.prev[location.x][location.y])) {
-			location = dijkstras.prev[location.x][location.y];
-		}
-		if (robot.robot_map[location.x][location.y] === 0) {
-			var offsetX = location.x - robot.me.x;
-			var offsetY = location.y - robot.me.y
-			action = robot.buildUnit(SPECS.CRUSADER, offsetX, offsetY); // Face towards target
-			// Radio crusader's target position
-			robot.signal(Util.encodePosition(resourceOrder[crusadersBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
-			crusadersBuilt++;
-			unitsBuilt++;
-			return true;
-		} else {
-			robot.log("Unable to spawn crusader: " + l[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-[Robot 2975 Log] "A Castle Turn: true"
-[Robot 1529 Log] "A Castle Turn: true"
-ocation + " - " + robot.map[location.x][location.y]);
-		}
-	}
-	return false;
-}*/
-
-function spawnProphet(controller) {
-	if (controller.karbonite < SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_KARBONITE || controller.fuel < SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_FUEL) {
-		return false;
-	}
-	if (prophetsBuilt < resourceOrder.length) {
-		// Rerun dijkstras to account for pilgrims blocking spawn locations
-		var location = resourceOrder[prophetsBuilt];
-		var castlePosition = Vector.ofRobotPosition(controller.me);
-		var start = Util.getAdjacentPassable(castlePosition);
-		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
-		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location)); // TODO: could be occupying a pilgrim's resource
-		// Build unit
-		while (!location.equals(dijkstras.prev[location.x][location.y])) {
-			location = dijkstras.prev[location.x][location.y];
-		}
-		if (controller.robot_map[location.x][location.y] === 0) {
-			var offsetX = location.x - controller.me.x;
-			var offsetY = location.y - controller.me.y
-			action = controller.buildUnit(SPECS.PROPHET, offsetX, offsetY); // Face towards target
-			// Radio prophet's target position
-			controller.signal(Util.encodePosition(resourceOrder[prophetsBuilt]), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
-			prophetsBuilt++;
-			unitsBuilt++;
-			unitToSpawn = SPECS.PROPHET;
-			return true;
-		} else {
-			controller.log("Unable to spawn prophet: " + location + " - " + controller.map[location.x][location.y]);
-		}
-	} else {
-		// Rerun dijkstras to account for pilgrims blocking spawn locations
-		var randomEnemyCastle = enemyPredictions[Math.floor(Math.random() * enemyPredictions.length)]; // Select a random enemy castle
-		var location = randomEnemyCastle;
-		var castlePosition = Vector.ofRobotPosition(controller.me);
-		var start = Util.getAdjacentPassable(castlePosition);
-		var dijkstras = new Dijkstras(controller.map, start, totalMoves, totalMoveCosts);
-		location = dijkstras.resolve((vector) => vector.isAdjacentTo(location)); // TODO: could be occupying a pilgrim's resource
-		// Build unit
-		while (!location.equals(dijkstras.prev[location.x][location.y])) {
-			location = dijkstras.prev[location.x][location.y];
-		}
-		if (controller.robot_map[location.x][location.y] === 0) {
-			var offsetX = location.x - controller.me.x;
-			var offsetY = location.y - controller.me.y
-			action = controller.buildUnit(SPECS.PROPHET, offsetX, offsetY); // Face towards target
-			// Radio prophet's target position
-			controller.signal(Util.encodePosition(randomEnemyCastle), offsetX * offsetX + offsetY * offsetY); // Broadcast target position
-			prophetsBuilt++;
-			unitsBuilt++;
-			unitToSpawn = SPECS.PROPHET;
-			return true;
-		} else {
-			controller.log("Unable to spawn prophet: " + location + " - " + controller.map[location.x][location.y]);
-		}
-	}
-	return false;
 }
 
 var xBuffers = {};
