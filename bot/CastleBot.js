@@ -116,12 +116,53 @@ export class CastleBot {
 	hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
 		// Assumes that both targets are attackable (within attack range)
 		// Assumes we are playing the long game - not rushing castle
-		// Prioritize those that can attack back
+		var canSee = distanceSquared <= SPECS.UNITS[unitType].VISION_RADIUS;
+		var bestCanSee = bestDistanceSquared <= SPECS.UNITS[bestUnitType].VISION_RADIUS;
+		var isCombatUnit = (unitType === SPECS.CRUSADER || unitType === SPECS.PROPHET || unitType === SPECS.PREACHER);
+		var bestIsCombatUnit = (bestUnitType === SPECS.CRUSADER || bestUnitType === SPECS.PROPHETS || bestUnitType === SPECS.PREACHER);
+		// Prioritize combat units that can attack back
 		// then those that are combat units (crusaders, prophets, preachers) that can see us
-		// then workers (pilgrims) that can see us (enemy may be using pilgrims for vision of crusaders/preachers)
 		// then those that are combat units (crusaders, prophets, preachers) that cannot see us
-		// then workers (pilgrims) that cannot see us
-		// then structures (castles, churches)
+		// then workers (pilgrims) - vision is constant so one does not need to compare vision - comparing distanceSquared
+		// then castles
+		// then churches
+		if (isCombatUnit) {
+			if (!bestIsCombatUnit) {
+				return true;
+			}
+			// Both are combat units
+			var canAttack = Util.isWithinAttackRange(unitType, distanceSquared);
+			var bestCanAttack = Util.isWithinAttackRange(bestUnitType, bestDistanceSquared);
+			if (canAttack) {
+				
+			} else {
+				
+			}
+		} else if (bestIsCombatUnit) {
+			return false;
+		}
+		var isPilgrim = (unitType === SPECS.PILGRIM);
+		var bestIsPilgrim = (bestUnitType === SPECS.PILGRIM);
+		if (isPilgrim) {
+			if (!bestIsPilgrim) {
+				return true;
+			}
+			return distanceSquared < bestDistanceSquared;
+		} else if (bestIsPilgrim) {
+			return false;
+		}
+		var isCastle = (unitType === SPECS.CASTLE);
+		var bestIsCastle = (bestUnitType === SPECS.CASTLE);
+		if (isCastle) {
+			if (!bestIsCastle) {
+				return true;
+			}
+			return distanceSquared < bestDistanceSquared;
+		} else if (bestIsCastle) {
+			return false;
+		}
+		// Both are churches at this point
+		return distanceSquared < bestDistanceSquared;
 	}
 	castleAttack() {
 		var robots = this.controller.getVisibleRobots();
