@@ -32,6 +32,7 @@ export class CastleBot {
 		this.xBuffers = {};
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
+		this.retrieveId = false; // Used to keep track of pilgrim/defender ids
 		// This following system limits 1 pilgrim and 1 defender per resource
 		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
 		this.defenders = []; // Stores id or -1, indices correspond with resourceOrder
@@ -42,8 +43,8 @@ export class CastleBot {
 		this.addCastlePosition(castlePosition);
 		this.resourceOrder = this.getResourceOrder(castlePosition);
 		for (var i = 0; i < this.resourceOrder.length; i++) {
-			this.pilgrims[i].push(-1);
-			this.defenders[i].push(-1);
+			this.pilgrims.push(-1);
+			this.defenders.push(-1);
 		}
 	}
 	getResourceOrder(position) {
@@ -78,7 +79,7 @@ export class CastleBot {
 	}
 	spawnPilgrimForHarvesting() {
 		// Check costs of pilgrim
-		if (!isAffordable(SPECS.PILGRIM)) {
+		if (!Util.isAffordable(SPECS.PILGRIM)) {
 			return false;
 		}
 		// Find the first index where its value is -1 in this.pilgrims
@@ -86,13 +87,36 @@ export class CastleBot {
 		if (index === -1) { // Exhausted all resources this church is assigned to
 			return false;
 		}
+		var resourcePosition = this.resourceOrder[index];
+		if (this.controller.map[resourcePosition.x][resourcePosition.y] === false) {
+			// resourcePosition is not passable/occupiable
+			return false;
+		}
 		// Calculate which adjacent tile to build the pilgrim using Dijkstras
-		
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+		var stop = dijkstras.resolve(function(location) {
+			return location.equals(resourcePosition);
+		});
+		if (stop === undefined) {
+			// Dijkstras did not find resourcePosition
+			return false;
+		}
+		var traced = Util.trace(dijkstras, resourcePosition);
+		var offset = traced.subtract(castlePosition);
 		// Build the unit
-		this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
+		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target
-		
-		this.pilgrims[index] = /* */; // May have to retrieve id next turn
+		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y)
+		// Temporary set pilgrims array to arbitrary id
+		this.pilgrims[index] = 1234;
+		// Set retrieval of id for next turn
+		// Problem: The built robot gets to move before castle can retrieve id
+		/*this.retrieveId = true;
+		this.retrieveArray = this.pilgrims;
+		this.retrieveIndex = index;
+		this.retrieveOffset = offset;*/
 		this.pilgrimsAlive++;
 		return true;
 	}
@@ -104,7 +128,7 @@ export class CastleBot {
 		// Calculate which adjacent tile to build the pilgrim using Dijkstras
 		
 		// Build the unit
-		this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
+		// this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
 		// Signal to pilgrim the target church location
 		
 		return true;
@@ -190,7 +214,7 @@ export class CastleBot {
 		var bestDy = undefined;
 		var bestUnitType = undefined;
 		var bestDistanceSquared = 0;
-		for (int i = 0; i < robots.length; i++) {
+		for (var i = 0; i < robots.length; i++) {
 			var robot = robots[i];
 			// Find visible enemy robot in attack range
 			if (this.controller.isVisible(robot) && robot.team !== this.controller.me.team) {
@@ -231,8 +255,9 @@ export class CastleBot {
 	turn() {
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
-		removeDeadRobots(this.pilgrims);
-		removeDeadRobots(this.defenders);
+		// TODO - need to have retrieval id system or an alternative
+		// removeDeadRobots(this.pilgrims);
+		// removeDeadRobots(this.defenders);
 		// Castle talk for castle locations
 		if (this.controller.me.turn <= 3) {
 			if (this.controller.me.turn <= 2) {
@@ -269,20 +294,20 @@ export class CastleBot {
 			}
 		}
 		// Figure out actions
-		if (!castleAttack()) { // Try castle attacking
+		if (!this.castleAttack()) { // Try castle attacking
 			// Do normal stuff
 			if (this.controller.me.turn <= 2) { // Force pilgrim spawning for the first n turns where n >= 2
 				// spawn pilgrims for resourceOrder
-				spawnPilgrimForHarvesting();
+				this.spawnPilgrimForHarvesting();
 			} else {
 				// TODO: Check progress of other castles/churches - see if we have enough funds to create units for this structure
 				// doChurchPilgrimAndDefenderBuilding;
-				if (pilgrimsAlive <= defendersAlive) {
-					if (!spawnPilgrimForHarvesting()) {
-						spawnDefender();
+				if (this.pilgrimsAlive <= this.defendersAlive) {
+					if (!this.spawnPilgrimForHarvesting()) {
+						this.spawnDefender();
 					}
 				} else {
-					spawnDefender();
+					this.spawnDefender();
 				}
 				if (this.action !== undefined) { // Check if we have spawned a defender or pilgrim
 					// TODO: When to build attacker vs when to setup church vs do nothing
@@ -301,7 +326,7 @@ export class CastleBot {
 				}
 			}
 		}
-		return action;
+		return this.action;
 	}
 	addChurchPosition(churchPosition) {
 		this.structurePositions.push(churchPosition);

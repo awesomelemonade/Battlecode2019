@@ -61,6 +61,13 @@ export function getMove(dijkstras, start, location) {
 	return prev.subtract(start);
 }
 
+export function trace(dijkstras, location) {
+	while (!location.equals(dijkstras.prev[location.x][location.y])) {
+		location = dijkstras.prev[location.x][location.y];
+	}
+	return location;
+}
+
 export function hasKarbonite(location) {
 	return controller.karbonite_map[location.x][location.y];
 }
@@ -110,7 +117,7 @@ export function getAdjacentPassable(position) {
 	var ret = [];
 	for (var i = 0; i < adjacent.length; i++) {
 		var v = new Library.Vector(position.x + adjacent[i][0], position.y + adjacent[i][1]);
-		if ((!outOfBounds(v)) && controller.map[v.x][v.y] === true) { // Check if passable
+		if ((!outOfBounds(v)) && controller.map[v.x][v.y] === true && controller.robot_map[v.x][v.y] === 0) { // Check if passable
 			ret.push(v);
 		}
 	}

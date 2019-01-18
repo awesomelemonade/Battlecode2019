@@ -68,7 +68,7 @@ export class PilgrimBot {
 						var temp = this.controller.getRobot(tempId);
 						if (temp.team === this.controller.me.team && (temp.unit === SPECS.CASTLE || temp.unit === SPECS.CHURCH)) {
 							var offset = location.subtract(start);
-							return this.give(offset.x, offset.y, this.controller.me.karbonite, this.controller.me.fuel);
+							return this.controller.give(offset.x, offset.y, this.controller.me.karbonite, this.controller.me.fuel);
 						}
 					}
 				}
@@ -80,7 +80,7 @@ export class PilgrimBot {
 			var visibleEnemies = Util.getVisibleEnemies();
 			var start = Vector.ofRobotPosition(this.controller.me);
 			var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
-			var stop = dijkstras.resolve(isOnTarget.bind(this));
+			var stop = dijkstras.resolve(this.isOnTarget.bind(this));
 			if (stop === undefined) {
 				// Try to "kite"
 				// Loop through all moves
