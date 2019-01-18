@@ -116,8 +116,6 @@ export class CastleBot {
 	hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
 		// Assumes that both targets are attackable (within attack range)
 		// Assumes we are playing the long game - not rushing castle
-		var canSee = distanceSquared <= SPECS.UNITS[unitType].VISION_RADIUS;
-		var bestCanSee = bestDistanceSquared <= SPECS.UNITS[bestUnitType].VISION_RADIUS;
 		var isCombatUnit = (unitType === SPECS.CRUSADER || unitType === SPECS.PROPHET || unitType === SPECS.PREACHER);
 		var bestIsCombatUnit = (bestUnitType === SPECS.CRUSADER || bestUnitType === SPECS.PROPHETS || bestUnitType === SPECS.PREACHER);
 		// Prioritize combat units that can attack back
@@ -134,9 +132,31 @@ export class CastleBot {
 			var canAttack = Util.isWithinAttackRange(unitType, distanceSquared);
 			var bestCanAttack = Util.isWithinAttackRange(bestUnitType, bestDistanceSquared);
 			if (canAttack) {
-				
+				if (!bestCanAttack) {
+					return true;
+				} else {
+					// Both can attack
+					return distanceSquared < bestDistanceSquared;
+				}
 			} else {
-				
+				if (bestCanAttack) {
+					return false;
+				} else {
+					// Both cannot attack
+					var canSee = distanceSquared <= SPECS.UNITS[unitType].VISION_RADIUS;
+					var bestCanSee = bestDistanceSquared <= SPECS.UNITS[bestUnitType].VISION_RADIUS;
+					if (canSee) {
+						if (!bestCanSee) {
+							return true;
+						}
+					} else {
+						if (bestCanSee) {
+							return false;
+						}
+					}
+					// Both either cannot see, or both can see
+					return distanceSquared < bestDistanceSquared;
+				}
 			}
 		} else if (bestIsCombatUnit) {
 			return false;
