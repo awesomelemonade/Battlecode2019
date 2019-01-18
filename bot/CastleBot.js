@@ -24,7 +24,7 @@ export class CastleBot {
 		// Init
 		this.init();
 	}
-	function init() {
+	init() {
 		// Castle variables
 		this.castlePositions = [];
 		this.structurePositions = [];
@@ -38,24 +38,27 @@ export class CastleBot {
 		this.pilgrimsAlive = 0;
 		this.defendersAlive = 0;
 		// Calculate resourceOrder - resourceOrder should not change after construction
-		var castlePosition = Vector.ofRobotPosition(controller.me);
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
 		this.addCastlePosition(castlePosition);
-		this.resourceOrder = getResourceOrder(castlePosition);
+		this.resourceOrder = this.getResourceOrder(castlePosition);
 	}
-	function getResourceOrder(position) {
+	getResourceOrder(position) {
 		var start = Util.getAdjacentPassable(position);
-		var dijkstras = new Dijkstras(controller.true_map, start, totalMoves, totalMoveCosts);
+		var dijkstras = new Dijkstras(this.controller.true_map, start, totalMoves, totalMoveCosts);
 		var karboniteOrder = [];
 		var fuelOrder = [];
 		var resourceOrder = [];
-		dijkstras.resolve(function(location) {
+		dijkstras.resolve(function(location) { // Stop condition
+			// Stop condition is guaranteed to be evaluated only once per square
 			if (Util.hasKarbonite(location)) {
 				karboniteOrder.push(location);
 			}
 			if (Util.hasFuel(location)) {
 				fuelOrder.push(location);
 			}
-			return position.getDistanceSquared(location) > responsibleDistance; // Never trigger the stop condition
+			return false; // Never trigger the stop condition
+		}, function(location) { // ignore condition
+			return position.getDistanceSquared(location) > responsibleDistance;
 		});
 		// Interleave karbonite and fuel order
 		for (var i = 0; i < Math.min(karboniteOrder.length, fuelOrder.length); i++) {
@@ -68,7 +71,7 @@ export class CastleBot {
 		}
 		return resourceOrder;
 	}
-	function spawnPilgrimForHarvesting() {
+	spawnPilgrimForHarvesting() {
 		// Check costs of pilgrim
 		if (!isAffordable(SPECS.PILGRIM)) {
 			return false;
@@ -86,7 +89,7 @@ export class CastleBot {
 		
 		return true;
 	}
-	function spawnPilgrimForChurch(churchLocation) {
+	spawnPilgrimForChurch(churchLocation) {
 		// Check costs of pilgrim
 		if (!isAffordable(SPECS.PILGRIM)) {
 			return false;
@@ -98,11 +101,12 @@ export class CastleBot {
 		// Signal to pilgrim the target church location
 		
 	}
-	function turn() {
-		if (controller.me.turn <= 3) {
+	turn() {
+		if (this.controller.me.turn <= 3) {
+			var robots = this.controller.getVisibleRobots();
 			// Retrieve castle positions
 			for (var i = 0; i < robots.length; i++) {
-				if (robots[i].team === controller.me.team && robots[i].id !== controller.me.id) {
+				if (robots[i].team === this.controller.me.team && robots[i].id !== this.controller.me.id) {
 					var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
 					var robotUnusedBit = ((robots[i].castle_talk >>> CASTLE_UNUSED_BITSHIFT) & 1) === 1;
 					var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
@@ -111,13 +115,13 @@ export class CastleBot {
 							this.xBuffers[robots[i].id] = value;
 						} else if (robots[i].turn === 2) {
 							var newCastlePosition = new Vector(this.xBuffers[robots[i].id], value);
-							addCastlePosition(newCastlePosition);
+							this.addCastlePosition(newCastlePosition);
 						}
 					}
 				}
 			}
 		}
-		if (controller.me.turn <= 2) {
+		if (this.controller.me.turn <= 2) {
 			// spawn pilgrims for resourceOrder
 			// castle talk for castle positions
 			var signal = 0;
@@ -126,12 +130,12 @@ export class CastleBot {
 			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
 			
 			// Broadcast x or y position
-			if (controller.me.turn === 1) {
-				signal |= ((controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-			} else if (controller.me.turn === 2) {
-				signal |= ((controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+			if (this.controller.me.turn === 1) {
+				signal |= ((this.controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+			} else if (this.controller.me.turn === 2) {
+				signal |= ((this.controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
 			}
-			controller.castleTalk(signal);
+			this.controller.castleTalk(signal);
 		} else {
 			// doChurchPilgrimAndDefenderBuilding();
 			// if (alreadySpawnedPilgrimOrDefender) return;
@@ -149,20 +153,20 @@ export class CastleBot {
 			// }
 		}
 	}
-	function addChurchPosition(churchPosition) {
+	addChurchPosition(churchPosition) {
 		this.structurePositions.push(churchPosition);
 	}
-	function addCastlePosition(castlePosition) {
+	addCastlePosition(castlePosition) {
 		this.castlePositions.push(castlePosition);
 		this.structurePositions.push(castlePosition);
 		this.addEnemyPrediction(castlePosition);
 	}
-	function addEnemyPrediction(position) {
+	addEnemyPrediction(position) {
 		if (this.controller.isHorizontallySymmetric) {
-			this.enemyPredictions.push(Util.flipPositionForHorizontallySymmetric(position));
+			this.enemyCastlePredictions.push(Util.flipPositionForHorizontallySymmetric(position));
 		}
 		if (this.controller.isVerticallySymmetric) {
-			this.enemyPredictions.push(Util.flipPositionForVerticallySymmetric(position));
+			this.enemyCastlePredictions.push(Util.flipPositionForVerticallySymmetric(position));
 		}
 	}
 }

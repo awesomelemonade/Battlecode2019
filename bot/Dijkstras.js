@@ -23,7 +23,7 @@ export class Dijkstras {
 			this.prev[start.x][start.y] = start;
 		}
 	}
-	resolve(stopCondition = (vector) => false) {
+	resolve(stopCondition = (vector) => false, ignoreCondition = (condition) => false) {
 		while (!this.queue.isEmpty()) {
 			var popped = this.queue.pop();
 			if (stopCondition(popped)) {
@@ -32,21 +32,19 @@ export class Dijkstras {
 			var currentCost = this.dist[popped.x][popped.y];
 			for (var i = 0; i < this.moves.length; i++) {
 				var offset = this.moves[i];
-				var moveCost = currentCost + this.moveCosts[i];
 				var toExplore = popped.add(offset);
-				if (outOfBounds(toExplore) || this.terrainMap[toExplore.x][toExplore.y] == false) {
+				if (outOfBounds(toExplore) || this.terrainMap[toExplore.x][toExplore.y] == false || ignoreCondition(toExplore)) {
 					continue;
 				}
+				var moveCost = currentCost + this.moveCosts[i];
 				if (this.dist[toExplore.x][toExplore.y] == UNEXPLORED) {
 					this.dist[toExplore.x][toExplore.y] = moveCost;
 					this.prev[toExplore.x][toExplore.y] = popped;
 					this.queue.push(toExplore, moveCost);
-				} else {
-					if (moveCost < this.dist[toExplore.x][toExplore.y]) {
-						this.dist[toExplore.x][toExplore.y] = moveCost;
-						this.prev[toExplore.x][toExplore.y] = popped;
-						this.queue.decreaseScore(toExplore, moveCost);
-					}
+				} else if (moveCost < this.dist[toExplore.x][toExplore.y]) {
+					this.dist[toExplore.x][toExplore.y] = moveCost;
+					this.prev[toExplore.x][toExplore.y] = popped;
+					this.queue.decreaseScore(toExplore, moveCost);
 				}
 			}
 		}

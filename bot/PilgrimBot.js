@@ -8,7 +8,7 @@ export class PilgrimBot {
 		this.controller = controller;
 		this.init();
 	}
-	function init() {
+	init() {
 		// Retrieve signal from castle and set target
 		var castleSignal = Util.getInitialCastleSignal();
 		if (castleSignal === -1) {
@@ -18,10 +18,10 @@ export class PilgrimBot {
 			this.controller.log("Setting target: " + this.target);
 		}
 	}
-	function turn() {
+	turn() {
 		if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY || this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-			var start = Vector.ofRobotPosition(robot.me);
-			var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
+			var start = Vector.ofRobotPosition(this.controller.me);
+			var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
 			var stop = dijkstras.resolve(Util.isNextToCastleOrChurch);
 			if (stop === undefined) {
 				var visibleEnemies = Util.getVisibleEnemies();
@@ -74,7 +74,7 @@ export class PilgrimBot {
 				}
 				this.controller.log("Doing Nothing? " + start);
 			} else {
-				return robot.move(move.x, move.y);
+				return this.controller.move(move.x, move.y);
 			}
 		} else {
 			var visibleEnemies = Util.getVisibleEnemies();
@@ -166,7 +166,7 @@ export class PilgrimBot {
 			} else {
 				if (move.isZero()) {
 					if (Util.hasResource(start)) {
-						return robot.mine();
+						return this.controller.mine();
 					} else {
 						this.controller.log("Doing Nothing? " + start);
 					}
@@ -176,7 +176,7 @@ export class PilgrimBot {
 			}
 		}
 	}
-	function isOnTarget(location) {
+	isOnTarget(location) {
 		return this.target.equals(location);
 	}
 }
