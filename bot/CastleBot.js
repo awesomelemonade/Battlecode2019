@@ -108,9 +108,46 @@ export class CastleBot {
 		
 		return false;
 	}
+	hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
+		// Assumes that both targets are attackable (within attack range)
+		// Assumes we are playing the long game - not rushing castle
+		// Prioritize those that can attack back
+		// then those that are combat units (crusaders, prophets, preachers) that can see us
+		// then workers (pilgrims) that can see us (enemy may be using pilgrims for vision of crusaders/preachers)
+		// then those that are combat units (crusaders, prophets, preachers) that cannot see us
+		// then workers (pilgrims) that cannot see us
+		// then structures (castles, churches)
+	}
 	castleAttack() {
-		
-		return false;
+		var robots = this.controller.getVisibleRobots();
+		var bestDx = undefined;
+		var bestDy = undefined;
+		var bestUnitType = undefined;
+		var bestDistanceSquared = 0;
+		for (int i = 0; i < robots.length; i++) {
+			var robot = robots[i];
+			// Find visible enemy robot in attack range
+			if (this.controller.isVisible(robot) && robot.team !== this.controller.me.team) {
+				// To prevent unnecessary creation of vectors
+				var dx = robot.x - this.controller.me.x;
+				var dy = robot.y - this.controller.me.y;
+				var distanceSquared = dx * dx + dy * dy;
+				if (Util.isWithinAttackRange(SPECS.CASTLE, distanceSquared)) {
+					if (this.hasHigherAttackPriority(robot.unit, distanceSquared, bestUnitType, bestDistanceSquared)) {
+						bestDx = dx;
+						bestDy = dy;
+						bestUnitType = robot.unit;
+						bestDistanceSquared = distanceSquared;
+					}
+				}
+			}
+		}
+		if (bestUnitType === undefined) {
+			return false;
+		} else {
+			this.action = this.controller.attack(bestDx, bestDy);
+			return true;
+		}
 	}
 	turn() {
 		this.action = undefined;
