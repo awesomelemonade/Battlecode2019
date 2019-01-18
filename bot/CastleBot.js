@@ -57,7 +57,7 @@ export class CastleBot {
 				fuelOrder.push(location);
 			}
 			return false; // Never trigger the stop condition
-		}, function(location) { // ignore condition
+		}, function(location) { // Ignore condition
 			return position.getDistanceSquared(location) > responsibleDistance;
 		});
 		// Interleave karbonite and fuel order
@@ -65,6 +65,7 @@ export class CastleBot {
 			resourceOrder.push(karboniteOrder[i]);
 			resourceOrder.push(fuelOrder[i]);
 		}
+		// Push remaining resources into resourceOrder
 		for (var i = Math.min(karboniteOrder.length, fuelOrder.length); i < Math.max(karboniteOrder.length, fuelOrder.length); i++) {
 			var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
 			resourceOrder.push(temp[i]);
@@ -84,9 +85,10 @@ export class CastleBot {
 		// Calculate which adjacent tile to build the pilgrim using Dijkstras
 		
 		// Build the unit
-		
+		this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
 		// Signal to pilgrim the target
 		
+		pilgrimsAlive++;
 		return true;
 	}
 	spawnPilgrimForChurch(churchLocation) {
@@ -97,12 +99,37 @@ export class CastleBot {
 		// Calculate which adjacent tile to build the pilgrim using Dijkstras
 		
 		// Build the unit
-		
+		this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
 		// Signal to pilgrim the target church location
 		
+		return true;
+	}
+	spawnDefender() {
+		
+		return false;
+	}
+	castleAttack() {
+		
+		return false;
 	}
 	turn() {
+		this.action = undefined;
 		if (this.controller.me.turn <= 3) {
+			if (this.controller.me.turn <= 2) {
+				// castle talk for castle positions
+				var signal = 0;
+				
+				// Identify as Castle
+				signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
+				
+				// Broadcast x or y position
+				if (this.controller.me.turn === 1) {
+					signal |= ((this.controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+				} else if (this.controller.me.turn === 2) {
+					signal |= ((this.controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+				}
+				this.controller.castleTalk(signal);
+			}
 			var robots = this.controller.getVisibleRobots();
 			// Retrieve castle positions
 			for (var i = 0; i < robots.length; i++) {
@@ -121,37 +148,40 @@ export class CastleBot {
 				}
 			}
 		}
-		if (this.controller.me.turn <= 2) {
-			// spawn pilgrims for resourceOrder
-			// castle talk for castle positions
-			var signal = 0;
-			
-			// Identify as Castle
-			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
-			
-			// Broadcast x or y position
-			if (this.controller.me.turn === 1) {
-				signal |= ((this.controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-			} else if (this.controller.me.turn === 2) {
-				signal |= ((this.controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+		// Figure out actions
+		if (!castleAttack()) { // Try castle attacking
+			// Do normal stuff
+			if (this.controller.me.turn <= 2) { // Force pilgrim spawning for the first n turns
+				// spawn pilgrims for resourceOrder
+				spawnPilgrimForHarvesting();
+			} else {
+				// TODO: Check progress of other castles/churches - see if we have enough funds to create units for this structure
+				// doChurchPilgrimAndDefenderBuilding;
+				if (pilgrimsAlive <= defendersAlive) {
+					if (!spawnPilgrimForHarvesting()) {
+						spawnDefender();
+					}
+				} else {
+					spawnDefender();
+				}
+				if (this.action !== undefined) { // Check if we have spawned a defender or pilgrim
+					// TODO: When to build attacker vs when to setup church vs do nothing
+					// TODO: Should churches be able to setup a pilgrim to build churches
+					// castle talk "progress" in creating pilgrims/defenders
+					// retrieve castle talks from all units to calculate totalProgress
+					// TODO: Figure out the way to decide "itIsThisCastleThatShouldBuildTheChurch"
+					// if (totalProgress > arbitraryThreshold && itIsThisCastleThatShouldBuildTheChurch) {
+					// 		queue a castle talk for a church to be built
+					//		spawn a pilgrim
+					//		send a signal to the pilgrim to build a church
+					// }
+					// for (go through the queue) {
+					// 		execute castleTalk
+					// }
+				}
 			}
-			this.controller.castleTalk(signal);
-		} else {
-			// doChurchPilgrimAndDefenderBuilding();
-			// if (alreadySpawnedPilgrimOrDefender) return;
-			// TODO: Should churches be able to setup a pilgrim to build churches
-			// castle talk "progress" in creating pilgrims/defenders
-			// retrieve castle talks from all units to calculate totalProgress
-			// TODO: Figure out the way to decide "itIsThisCastleThatShouldBuildTheChurch"
-			// if (totalProgress > arbitraryThreshold && itIsThisCastleThatShouldBuildTheChurch) {
-			// 		queue a castle talk for a church to be built
-			//		spawn a pilgrim
-			//		send a signal to the pilgrim to build a church
-			// }
-			// for (go through the queue) {
-			// 		execute castleTalk
-			// }
 		}
+		return action;
 	}
 	addChurchPosition(churchPosition) {
 		this.structurePositions.push(churchPosition);
