@@ -41,6 +41,10 @@ export class CastleBot {
 		var castlePosition = Vector.ofRobotPosition(this.controller.me);
 		this.addCastlePosition(castlePosition);
 		this.resourceOrder = this.getResourceOrder(castlePosition);
+		for (var i = 0; i < this.resourceOrder.length; i++) {
+			this.pilgrims[i].push(-1);
+			this.defenders[i].push(-1);
+		}
 	}
 	getResourceOrder(position) {
 		var start = Util.getAdjacentPassable(position);
@@ -88,7 +92,8 @@ export class CastleBot {
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
 		// Signal to pilgrim the target
 		
-		pilgrimsAlive++;
+		this.pilgrims[index] = /* */; // May have to retrieve id next turn
+		this.pilgrimsAlive++;
 		return true;
 	}
 	spawnPilgrimForChurch(churchLocation) {
@@ -149,8 +154,25 @@ export class CastleBot {
 			return true;
 		}
 	}
+	removeDeadRobots(robots) {
+		for (var i = 0; i < this.robots.length; i++) {
+			var robotId = this.robots[i];
+			if (robotId === -1) {
+				continue;
+			}
+			var robot = this.controller.getRobot(robotId);
+			if (robot === null || (!this.controller.isVisible(robot))) {
+				// Robot is dead
+				this.robots[i] = -1;
+			}
+		}
+	}
 	turn() {
 		this.action = undefined;
+		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
+		removeDeadRobots(this.pilgrims);
+		removeDeadRobots(this.defenders);
+		// Castle talk for castle locations
 		if (this.controller.me.turn <= 3) {
 			if (this.controller.me.turn <= 2) {
 				// castle talk for castle positions
@@ -188,7 +210,7 @@ export class CastleBot {
 		// Figure out actions
 		if (!castleAttack()) { // Try castle attacking
 			// Do normal stuff
-			if (this.controller.me.turn <= 2) { // Force pilgrim spawning for the first n turns
+			if (this.controller.me.turn <= 2) { // Force pilgrim spawning for the first n turns where n >= 2
 				// spawn pilgrims for resourceOrder
 				spawnPilgrimForHarvesting();
 			} else {
