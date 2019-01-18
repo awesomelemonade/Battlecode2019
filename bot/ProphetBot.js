@@ -8,7 +8,7 @@ export class ProphetBot {
 		this.controller = controller;
 		init();
 	}
-	function init() {
+	init() {
 		// Retrieve signal from castle and set target
 		var castleSignal = Util.getInitialCastleSignal();
 		if (castleSignal === -1) {
@@ -18,7 +18,7 @@ export class ProphetBot {
 			this.controller.log("Setting target: " + this.target);
 		}
 	}
-	function turn() {
+	turn() {
 		// Check if castle broadcasted target - TODO
 		if (this.target === null || (!Util.hasResource(this.target))) {
 			var robots = this.controller.getVisibleRobots();

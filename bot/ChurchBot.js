@@ -12,7 +12,7 @@ export class ChurchBot {
 		this.resourceOrder = [];
 		this.init();
 	}
-	function init() {
+	init() {
 		this.resourceOrder = [];
 		// This following system limits 1 pilgrim and 1 defender per resource
 		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
@@ -24,7 +24,7 @@ export class ChurchBot {
 		// Find and communicate to the pilgrim that built this church its target resource
 		
 	}
-	function spawnPilgrim() {
+	spawnPilgrim() {
 		// Check costs of pilgrim
 		if (!isAffordable(SPECS.PILGRIM)) {
 			return false;
@@ -42,13 +42,13 @@ export class ChurchBot {
 		
 		return true;
 	}
-	function spawnDefender() {
+	spawnDefender() {
 		// TODO: Where to put defender relative to church/resource?
 		// Check costs of defender
 		
 		// Signal the defender the target
 	}
-	function turn() {
+	turn() {
 		controller.log("A Church Turn");
 		// Detect dead pilgrims & defenders using vision_radius
 		

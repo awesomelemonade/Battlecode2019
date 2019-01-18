@@ -3,34 +3,35 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 import {WrappedController} from './bot/WrappedController';
 import {setUtilController} from './bot/Util';
 
-import {castleTurn} from './bot/CastleBot';
-import {churchTurn} from './bot/ChurchBot';
-import {pilgrimTurn} from './bot/PilgrimBot';
-import {crusaderTurn} from './bot/CrusaderBot';
-import {prophetTurn} from './bot/ProphetBot';
-import {preacherTurn} from './bot/PreacherBot';
+import {CastleBot} from './bot/CastleBot';
+import {ChurchBot} from './bot/ChurchBot';
+import {PilgrimBot} from './bot/PilgrimBot';
+import {CrusaderBot} from './bot/CrusaderBot';
+import {ProphetBot} from './bot/ProphetBot';
+import {PreacherBot} from './bot/PreacherBot';
 
 class MyRobot extends BCAbstractRobot {
 	constructor() {
 		super();
 		this.bots = {};
-		this.bots[SPECS.CASTLE] = castleTurn;
-		this.bots[SPECS.CHURCH] = churchTurn;
-		this.bots[SPECS.PILGRIM] = pilgrimTurn;
-		this.bots[SPECS.CRUSADER] = crusaderTurn;
-		this.bots[SPECS.PROPHET] = prophetTurn;
-		this.bots[SPECS.PREACHER] = preacherTurn;
+		this.bots[SPECS.CASTLE] = CastleBot;
+		this.bots[SPECS.CHURCH] = ChurchBot;
+		this.bots[SPECS.PILGRIM] = PilgrimBot;
+		this.bots[SPECS.CRUSADER] = CrusaderBot;
+		this.bots[SPECS.PROPHET] = ProphetBot;
+		this.bots[SPECS.PREACHER] = PreacherBot;
 		this.initialized = false;
 	}
 	init() {
 		// Create controller
 		this.controller = new WrappedController(this);
+		this.controller.turn(); // Prepare controller for init of bots
 		// Set Util's controller
 		setUtilController(this.controller);
 		// Figure out unit type to set this.botTurn
 		for (var property in this.bots) {
 			if (this.bots.hasOwnProperty(property) && this.me.unit.toString() === property) {
-				this.botTurn = this.bots[property]; // Set this.botTurn
+				this.bot = new this.bots[property](this.controller);
 				break;
 			}
 		}
@@ -41,7 +42,7 @@ class MyRobot extends BCAbstractRobot {
 			this.init();
 		}
 		this.controller.turn(); // Preparation of controller
-		return this.botTurn(this.controller); // Execute Turn
+		return this.bot.turn(); // Execute Turn
 	}
 }
 
