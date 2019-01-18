@@ -15,11 +15,11 @@ export class PilgrimBot {
 			this.controller.log("Unable to find castle signal?");
 		} else {
 			this.target = Util.decodePosition(castleSignal);
-			this.controller.log("Setting target: " + target);
+			this.controller.log("Setting target: " + this.target);
 		}
 	}
 	function turn() {
-		if (robot.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY || robot.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
+		if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY || this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
 			var start = Vector.ofRobotPosition(robot.me);
 			var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
 			var stop = dijkstras.resolve(Util.isNextToCastleOrChurch);
@@ -51,11 +51,11 @@ export class PilgrimBot {
 				}
 				if (bestMove == null) {
 					// Nowhere to kite
-					robot.log("yay im ded");
+					this.controller.log("yay im ded");
 					return;
 				} else {
 					// We can kite
-					return robot.move(bestMove.x, bestMove.y);
+					return this.controller.move(bestMove.x, bestMove.y);
 				}
 			}
 			var move = Util.getMove(dijkstras, start, stop);
@@ -63,23 +63,23 @@ export class PilgrimBot {
 				const adjacent = Util.getAdjacent(start);
 				for (var i = 0; i < adjacent.length; i++) {
 					var location = adjacent[i];
-					var tempId = robot.robot_map[location.x][location.y];
+					var tempId = this.controller.robot_map[location.x][location.y];
 					if (tempId > 0) {
-						var temp = robot.getRobot(tempId);
-						if (temp.team === robot.me.team && (temp.unit === SPECS.CASTLE || temp.unit === SPECS.CHURCH)) {
+						var temp = this.controller.getRobot(tempId);
+						if (temp.team === this.controller.me.team && (temp.unit === SPECS.CASTLE || temp.unit === SPECS.CHURCH)) {
 							var offset = location.subtract(start);
-							return this.give(offset.x, offset.y, robot.me.karbonite, robot.me.fuel);
+							return this.give(offset.x, offset.y, this.controller.me.karbonite, this.controller.me.fuel);
 						}
 					}
 				}
-				robot.log("Doing Nothing? " + start);
+				this.controller.log("Doing Nothing? " + start);
 			} else {
 				return robot.move(move.x, move.y);
 			}
 		} else {
 			var visibleEnemies = Util.getVisibleEnemies();
-			var start = Vector.ofRobotPosition(robot.me);
-			var dijkstras = new Dijkstras(robot.map, start, totalMoves, totalMoveCosts);
+			var start = Vector.ofRobotPosition(this.controller.me);
+			var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
 			var stop = dijkstras.resolve(isOnTarget.bind(this));
 			if (stop === undefined) {
 				// Try to "kite"
@@ -108,11 +108,11 @@ export class PilgrimBot {
 				}
 				if (bestMove == null) {
 					// Nowhere to kite
-					robot.log("yay im ded");
+					this.controller.log("yay im ded");
 					return;
 				} else {
 					// We can kite
-					return robot.move(bestMove.x, bestMove.y);
+					return this.controller.move(bestMove.x, bestMove.y);
 				}
 			}
 			var move = Util.getMove(dijkstras, start, stop);
@@ -157,21 +157,21 @@ export class PilgrimBot {
 				}
 				if (bestMove == null) {
 					// Nowhere to kite
-					robot.log("yay im ded");
+					this.controller.log("yay im ded");
 					return;
 				} else {
 					// We can kite
-					return robot.move(bestMove.x, bestMove.y);
+					return this.controller.move(bestMove.x, bestMove.y);
 				}
 			} else {
 				if (move.isZero()) {
 					if (Util.hasResource(start)) {
 						return robot.mine();
 					} else {
-						robot.log("Doing Nothing? " + start);
+						this.controller.log("Doing Nothing? " + start);
 					}
 				} else {
-					return robot.move(move.x, move.y);
+					return this.controller.move(move.x, move.y);
 				}
 			}
 		}
