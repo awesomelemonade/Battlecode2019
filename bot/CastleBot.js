@@ -108,7 +108,7 @@ export class CastleBot {
 		// Build the unit
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target
-		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y)
+		this.controller.signal((Util.encodePosition(resourcePosition) << 1), offset.x * offset.x + offset.y * offset.y)
 		// Temporary set pilgrims array to arbitrary id
 		this.pilgrims[index] = 1234;
 		// Set retrieval of id for next turn
@@ -122,15 +122,30 @@ export class CastleBot {
 	}
 	spawnPilgrimForChurch(churchLocation) {
 		// Check costs of pilgrim
-		if (!isAffordable(SPECS.PILGRIM)) {
+		if (!Util.isAffordable(SPECS.PILGRIM)) {
+			return false;
+		}
+		if (this.controller.map[churchLocation.x][churchLocation.y] === false) {
+			// churchLocation is not passable/occupiable
 			return false;
 		}
 		// Calculate which adjacent tile to build the pilgrim using Dijkstras
-		
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+		var stop = dijkstras.resolve(function(location) {
+			return location.equals(churchLocation);
+		});
+		if (stop === undefined) {
+			// Dijkstras did not find churchLocation
+			return false;
+		}
+		var traced = Util.trace(dijkstras, churchLocation);
+		var offset = traced.subtract(castlePosition);
 		// Build the unit
-		// this.action = this.controller.buildUnit(SPECS.PILGRIM, /*dx*/, /*dy*/);
-		// Signal to pilgrim the target church location
-		
+		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
+		// Signal to pilgrim the target church location - TODO: PilgrimBot has to differentiate building church and harvesting
+		this.controller.signal((Util.encodePosition(resourcePosition) << 1) + 1, offset.x * offset.x + offset.y * offset.y)
 		return true;
 	}
 	spawnDefender() {
