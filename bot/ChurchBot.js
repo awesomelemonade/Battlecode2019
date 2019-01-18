@@ -26,7 +26,9 @@ export class ChurchBot {
 	}
 	function spawnPilgrim() {
 		// Check costs of pilgrim
-		
+		if (!isAffordable(SPECS.PILGRIM)) {
+			return false;
+		}
 		// Find the first index where its value is -1 in this.pilgrims
 		var index = Util.findIndex(this.pilgrims, -1);
 		if (index === -1) { // Exhausted all resources this church is assigned to

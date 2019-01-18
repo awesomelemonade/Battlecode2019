@@ -160,3 +160,7 @@ export function findIndex(array, value) {
 	}
 	return -1;
 }
+
+export function isAffordable(type) {
+	return controller.karbonite >= SPECS.UNITS[type].CONSTRUCTION_KARBONITE && controller.fuel >= SPECS.UNITS[type].CONSTRUCTION_FUEL;
+}

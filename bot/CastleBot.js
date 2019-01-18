@@ -21,16 +21,16 @@ const CASTLE_SPAWNTYPE_BITMASK = 0b11; // Pilgrims, Crusaders, Prophets, Preache
 export class CastleBot {
 	constructor(controller) {
 		this.controller = controller;
-		// Castle variables
-		this.castlePositionsInitialized = false;
-		this.castlePositions = [];
-		this.structurePositions = [];
-		this.enemyCastlePredictions = [];
 		// Init
 		this.init();
 	}
 	function init() {
-		// Church variables (Castle is church + extra)
+		// Castle variables
+		this.castlePositions = [];
+		this.structurePositions = [];
+		this.enemyCastlePredictions = [];
+		this.xBuffers = {};
+		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
 		// This following system limits 1 pilgrim and 1 defender per resource
 		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
@@ -38,12 +38,100 @@ export class CastleBot {
 		this.pilgrimsAlive = 0;
 		this.defendersAlive = 0;
 		// Calculate resourceOrder - resourceOrder should not change after construction
+		var castlePosition = Vector.ofRobotPosition(controller.me);
+		this.addCastlePosition(castlePosition);
+		this.resourceOrder = getResourceOrder(castlePosition);
+	}
+	function getResourceOrder(position) {
+		var start = Util.getAdjacentPassable(position);
+		var dijkstras = new Dijkstras(controller.true_map, start, totalMoves, totalMoveCosts);
+		var karboniteOrder = [];
+		var fuelOrder = [];
+		var resourceOrder = [];
+		dijkstras.resolve(function(location) {
+			if (Util.hasKarbonite(location)) {
+				karboniteOrder.push(location);
+			}
+			if (Util.hasFuel(location)) {
+				fuelOrder.push(location);
+			}
+			return position.getDistanceSquared(location) > responsibleDistance; // Never trigger the stop condition
+		});
+		// Interleave karbonite and fuel order
+		for (var i = 0; i < Math.min(karboniteOrder.length, fuelOrder.length); i++) {
+			resourceOrder.push(karboniteOrder[i]);
+			resourceOrder.push(fuelOrder[i]);
+		}
+		for (var i = Math.min(karboniteOrder.length, fuelOrder.length); i < Math.max(karboniteOrder.length, fuelOrder.length); i++) {
+			var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
+			resourceOrder.push(temp[i]);
+		}
+		return resourceOrder;
+	}
+	function spawnPilgrimForHarvesting() {
+		// Check costs of pilgrim
+		if (!isAffordable(SPECS.PILGRIM)) {
+			return false;
+		}
+		// Find the first index where its value is -1 in this.pilgrims
+		var index = Util.findIndex(this.pilgrims, -1);
+		if (index === -1) { // Exhausted all resources this church is assigned to
+			return false;
+		}
+		// Calculate which adjacent tile to build the pilgrim using Dijkstras
+		
+		// Build the unit
+		
+		// Signal to pilgrim the target
+		
+		return true;
+	}
+	function spawnPilgrimForChurch(churchLocation) {
+		// Check costs of pilgrim
+		if (!isAffordable(SPECS.PILGRIM)) {
+			return false;
+		}
+		// Calculate which adjacent tile to build the pilgrim using Dijkstras
+		
+		// Build the unit
+		
+		// Signal to pilgrim the target church location
 		
 	}
 	function turn() {
-		if (!castlePositionsInitialized) {
+		if (controller.me.turn <= 3) {
+			// Retrieve castle positions
+			for (var i = 0; i < robots.length; i++) {
+				if (robots[i].team === controller.me.team && robots[i].id !== controller.me.id) {
+					var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
+					var robotUnusedBit = ((robots[i].castle_talk >>> CASTLE_UNUSED_BITSHIFT) & 1) === 1;
+					var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
+					if (robotIsCastle) {
+						if (robots[i].turn === 1) {
+							this.xBuffers[robots[i].id] = value;
+						} else if (robots[i].turn === 2) {
+							var newCastlePosition = new Vector(this.xBuffers[robots[i].id], value);
+							addCastlePosition(newCastlePosition);
+						}
+					}
+				}
+			}
+		}
+		if (controller.me.turn <= 2) {
 			// spawn pilgrims for resourceOrder
 			// castle talk for castle positions
+			var signal = 0;
+			
+			// Identify as Castle
+			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
+			
+			// Broadcast x or y position
+			if (controller.me.turn === 1) {
+				signal |= ((controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+			} else if (controller.me.turn === 2) {
+				signal |= ((controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+			}
+			controller.castleTalk(signal);
 		} else {
 			// doChurchPilgrimAndDefenderBuilding();
 			// if (alreadySpawnedPilgrimOrDefender) return;
@@ -105,123 +193,6 @@ function decodeCastleSpawnType(code) {
 	} else {
 		return -1;
 	}
-}
-
-function initialize() {
-	// Dijkstra for some karbonite/fuel positions - TODO: use other castle locations for start
-	var castlePosition = Vector.ofRobotPosition(controller.me);
-	addCastlePosition(castlePosition);
-	const adjacent = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-	var start = [];
-	for (var i = 0; i < adjacent.length; i++) {
-		var v = new Vector(castlePosition.x + adjacent[i][0], castlePosition.y + adjacent[i][1]);
-		if ((!Util.outOfBounds(v)) && controller.map[v.x][v.y] === true) { // Check if passable
-			start.push(v);
-		}
-	}
-	var dijkstras = new Dijkstras(controller.true_map, start, totalMoves, totalMoveCosts);
-	dijkstras.resolve(function(location) {
-		for (var i = 0; i < castlePositions.length; i++) {
-			var position = castlePositions[i];
-			if (position.equals(castlePosition)) { // It's our own castle
-				continue;
-			}
-			if (position.getDistanceSquared(location) <= 5) {
-				return false;
-			}
-		}
-		if (Util.hasKarbonite(location)) {
-			karboniteOrder.push(location);
-		}
-		if (Util.hasFuel(location)) {
-			fuelOrder.push(location);
-		}
-		return false; // Never trigger the stop condition
-	});
-	for (var i = 0; i < Math.min(karboniteOrder.length, fuelOrder.length); i++) {
-		resourceOrder.push(karboniteOrder[i]);
-		resourceOrder.push(fuelOrder[i]);
-	}
-	for (var i = Math.min(karboniteOrder.length, fuelOrder.length); i < Math.max(karboniteOrder.length, fuelOrder.length); i++) {
-		var temp = karboniteOrder.length > fuelOrder.length ? karboniteOrder : fuelOrder;
-		resourceOrder.push(temp[i]);
-	}
-	initialized = true;
-}
-
-var xBuffers = {};
-
-function handleCastleTalk(controller) {
-	var robots = controller.getVisibleRobots();
-	
-	for (var i = 0; i < robots.length; i++) {
-		if (robots[i].team === controller.me.team && robots[i].id !== controller.me.id) {
-			var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
-			var robotUnusedBit = ((robots[i].castle_talk >>> CASTLE_UNUSED_BITSHIFT) & 1) === 1;
-			var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
-			if (robotIsCastle) {
-				if (robots[i].turn === 1) {
-					xBuffers[robots[i].id] = value;
-				} else if (robots[i].turn === 2) {
-					var newCastlePosition = new Vector(xBuffers[robots[i].id], value);
-					addCastlePosition(newCastlePosition);
-				} else if (robots[i].turn > 2) {
-					/*var castleTurn = robots[i].turn;
-					var castleSpawned = ((robots[i].castle_talk >>> CASTLE_SPAWN_BITSHIFT) & 1) === 1;
-					var castleSpawnType = decodeCastleSpawnType((robots[i].castle_talk >>> CASTLE_SPAWNTYPE_BITSHIFT) & CASTLE_SPAWNTYPE_MASK);
-					if (castleSpawned) {
-						// TODO: Remove from fuelOrder, karboniteOrder, and resourceOrder
-						if (castleSpawnType === SPECS.PILGRIM) {
-							pilgrimsBuilt++;
-						}
-						if (castleSpawnType === SPECS.CRUSADER) {
-							crusadersBuilt++;
-						}
-						if (castleSpawnType === SPECS.PROPHET) {
-							prophetsBuilt++;
-						}
-						if (castleSpawnType === SPECS.PREACHER) {
-							preachersBuilt++;
-						}
-						unitsBuilt++;
-					}*/
-				}
-			}
-		}
-	}
-	
-	var signal = 0;
-	
-	// Identify as Castle
-	signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
-	
-	// Broadcast x or y position
-	if (controller.me.turn === 1) {
-		signal |= ((controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-	} else if (controller.me.turn === 2) {
-		signal |= ((controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-	} else if (controller.me.turn === 3) {
-		castlePositionsInitialized = true;
-		// Run Dijkstras on all castle positions to figure out resourceOrder
-		// Temporary - remove all resourceOrder near other castles
-		var castlePosition = Vector.ofRobotPosition(controller.me);
-		
-		for (var i = 0; i < resourceOrder.length; i++) {
-			var resourcePosition = resourceOrder[i];
-			for (var j = 0; j < castlePositions.length; j++) {
-				var position = castlePositions[j];
-				if (position.equals(castlePosition)) { // It's our own castle
-					continue;
-				}
-				if (position.getDistanceSquared(resourcePosition) <= 5) {
-					resourceOrder.splice(i, 1);
-					i--;
-					break;
-				}
-			}
-		}
-	}
-	controller.castleTalk(signal);
 }
 
 export function castleTurn(r) {
