@@ -7,7 +7,7 @@ import {CastleBot} from './bot/CastleBot';
 import {ChurchBot} from './bot/ChurchBot';
 import {PilgrimBot} from './bot/PilgrimBot';
 import {CrusaderBot} from './bot/CrusaderBot';
-import {ProphetBot} from './bot/ProphetBot';
+import {ProphetBot} from './bot/LatticeProphetBot';
 import {PreacherBot} from './bot/PreacherBot';
 
 class MyRobot extends BCAbstractRobot {

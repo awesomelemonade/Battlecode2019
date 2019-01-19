@@ -171,3 +171,111 @@ export function findIndex(array, value) {
 export function isAffordable(type) {
 	return controller.karbonite >= SPECS.UNITS[type].CONSTRUCTION_KARBONITE && controller.fuel >= SPECS.UNITS[type].CONSTRUCTION_FUEL;
 }
+
+
+export function hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
+	if (bestUnitType === undefined) {
+		return true;
+	}
+	// Assumes that both targets are attackable (within attack range)
+	// Assumes we are playing the long game - not rushing castle
+	var isCombatUnit = (unitType === SPECS.CRUSADER || unitType === SPECS.PROPHET || unitType === SPECS.PREACHER);
+	var bestIsCombatUnit = (bestUnitType === SPECS.CRUSADER || bestUnitType === SPECS.PROPHETS || bestUnitType === SPECS.PREACHER);
+	// Prioritize combat units that can attack back
+	// then those that are combat units (crusaders, prophets, preachers) that can see us
+	// then those that are combat units (crusaders, prophets, preachers) that cannot see us
+	// then workers (pilgrims) - vision is constant so one does not need to compare vision - comparing distanceSquared
+	// then castles
+	// then churches
+	if (isCombatUnit) {
+		if (!bestIsCombatUnit) {
+			return true;
+		}
+		// Both are combat units
+		var canAttack = isWithinAttackRange(unitType, distanceSquared);
+		var bestCanAttack = isWithinAttackRange(bestUnitType, bestDistanceSquared);
+		if (canAttack) {
+			if (!bestCanAttack) {
+				return true;
+			} else {
+				// Both can attack
+				return distanceSquared < bestDistanceSquared;
+			}
+		} else {
+			if (bestCanAttack) {
+				return false;
+			} else {
+				// Both cannot attack
+				var canSee = distanceSquared <= SPECS.UNITS[unitType].VISION_RADIUS;
+				var bestCanSee = bestDistanceSquared <= SPECS.UNITS[bestUnitType].VISION_RADIUS;
+				if (canSee) {
+					if (!bestCanSee) {
+						return true;
+					}
+				} else {
+					if (bestCanSee) {
+						return false;
+					}
+				}
+				// Both either cannot see, or both can see
+				return distanceSquared < bestDistanceSquared;
+			}
+		}
+	} else if (bestIsCombatUnit) {
+		return false;
+	}
+	var isPilgrim = (unitType === SPECS.PILGRIM);
+	var bestIsPilgrim = (bestUnitType === SPECS.PILGRIM);
+	if (isPilgrim) {
+		if (!bestIsPilgrim) {
+			return true;
+		}
+		return distanceSquared < bestDistanceSquared;
+	} else if (bestIsPilgrim) {
+		return false;
+	}
+	var isCastle = (unitType === SPECS.CASTLE);
+	var bestIsCastle = (bestUnitType === SPECS.CASTLE);
+	if (isCastle) {
+		if (!bestIsCastle) {
+			return true;
+		}
+		return distanceSquared < bestDistanceSquared;
+	} else if (bestIsCastle) {
+		return false;
+	}
+	// Both are churches at this point
+	return distanceSquared < bestDistanceSquared;
+}
+
+
+export function getAttackMove() {
+	var robots = controller.getVisibleRobots();
+	var bestDx = undefined;
+	var bestDy = undefined;
+	var bestUnitType = undefined;
+	var bestDistanceSquared = 0;
+	for (var i = 0; i < robots.length; i++) {
+		var robot = robots[i];
+		// Find visible enemy robot in attack range
+		if (controller.isVisible(robot) && robot.team !== controller.me.team) {
+			// To prevent unnecessary creation of vectors
+			var dx = robot.x - controller.me.x;
+			var dy = robot.y - controller.me.y;
+			var distanceSquared = dx * dx + dy * dy;
+			if (isWithinAttackRange(controller.me.unit, distanceSquared)) {
+				if (hasHigherAttackPriority(robot.unit, distanceSquared, bestUnitType, bestDistanceSquared)) {
+					bestDx = dx;
+					bestDy = dy;
+					bestUnitType = robot.unit;
+					bestDistanceSquared = distanceSquared;
+				}
+			}
+		}
+	}
+	if (bestUnitType === undefined) {
+		return undefined;
+	} else {
+		return controller.attack(bestDx, bestDy);
+	}
+}

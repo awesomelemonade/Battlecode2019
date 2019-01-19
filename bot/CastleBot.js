@@ -175,107 +175,43 @@ export class CastleBot {
 		// Signal to prophet
 		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y);
 		this.defendersAlive++;
-		return false;
+		return true;
 	}
-	hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
-		// Assumes that both targets are attackable (within attack range)
-		// Assumes we are playing the long game - not rushing castle
-		var isCombatUnit = (unitType === SPECS.CRUSADER || unitType === SPECS.PROPHET || unitType === SPECS.PREACHER);
-		var bestIsCombatUnit = (bestUnitType === SPECS.CRUSADER || bestUnitType === SPECS.PROPHETS || bestUnitType === SPECS.PREACHER);
-		// Prioritize combat units that can attack back
-		// then those that are combat units (crusaders, prophets, preachers) that can see us
-		// then those that are combat units (crusaders, prophets, preachers) that cannot see us
-		// then workers (pilgrims) - vision is constant so one does not need to compare vision - comparing distanceSquared
-		// then castles
-		// then churches
-		if (isCombatUnit) {
-			if (!bestIsCombatUnit) {
-				return true;
-			}
-			// Both are combat units
-			var canAttack = Util.isWithinAttackRange(unitType, distanceSquared);
-			var bestCanAttack = Util.isWithinAttackRange(bestUnitType, bestDistanceSquared);
-			if (canAttack) {
-				if (!bestCanAttack) {
-					return true;
-				} else {
-					// Both can attack
-					return distanceSquared < bestDistanceSquared;
-				}
-			} else {
-				if (bestCanAttack) {
-					return false;
-				} else {
-					// Both cannot attack
-					var canSee = distanceSquared <= SPECS.UNITS[unitType].VISION_RADIUS;
-					var bestCanSee = bestDistanceSquared <= SPECS.UNITS[bestUnitType].VISION_RADIUS;
-					if (canSee) {
-						if (!bestCanSee) {
-							return true;
-						}
-					} else {
-						if (bestCanSee) {
-							return false;
-						}
-					}
-					// Both either cannot see, or both can see
-					return distanceSquared < bestDistanceSquared;
-				}
-			}
-		} else if (bestIsCombatUnit) {
+	spawnLatticeProphet() {
+		// Check costs of prophet
+		if (!Util.isAffordable(SPECS.PROPHET)) {
 			return false;
 		}
-		var isPilgrim = (unitType === SPECS.PILGRIM);
-		var bestIsPilgrim = (bestUnitType === SPECS.PILGRIM);
-		if (isPilgrim) {
-			if (!bestIsPilgrim) {
-				return true;
-			}
-			return distanceSquared < bestDistanceSquared;
-		} else if (bestIsPilgrim) {
-			return false;
-		}
-		var isCastle = (unitType === SPECS.CASTLE);
-		var bestIsCastle = (bestUnitType === SPECS.CASTLE);
-		if (isCastle) {
-			if (!bestIsCastle) {
-				return true;
-			}
-			return distanceSquared < bestDistanceSquared;
-		} else if (bestIsCastle) {
-			return false;
-		}
-		// Both are churches at this point
-		return distanceSquared < bestDistanceSquared;
-	}
-	castleAttack() {
-		var robots = this.controller.getVisibleRobots();
-		var bestDx = undefined;
-		var bestDy = undefined;
-		var bestUnitType = undefined;
-		var bestDistanceSquared = 0;
-		for (var i = 0; i < robots.length; i++) {
-			var robot = robots[i];
-			// Find visible enemy robot in attack range
-			if (this.controller.isVisible(robot) && robot.team !== this.controller.me.team) {
-				// To prevent unnecessary creation of vectors
-				var dx = robot.x - this.controller.me.x;
-				var dy = robot.y - this.controller.me.y;
-				var distanceSquared = dx * dx + dy * dy;
-				if (Util.isWithinAttackRange(SPECS.CASTLE, distanceSquared)) {
-					if (this.hasHigherAttackPriority(robot.unit, distanceSquared, bestUnitType, bestDistanceSquared)) {
-						bestDx = dx;
-						bestDy = dy;
-						bestUnitType = robot.unit;
-						bestDistanceSquared = distanceSquared;
-					}
-				}
-			}
-		}
-		if (bestUnitType === undefined) {
-			return false;
+		var randomEnemyCastlePosition = this.enemyCastlePredictions[Math.floor(Math.random() * this.enemyCastlePredictions.length)];
+		// Calculate which adjacent tile to build the prophet using Dijkstras
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+		var stop = dijkstras.resolve(function(location) { // Stop Condition
+			return (location.x + location.y) % 2 === 0 && (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
+		}, function(location) { // Ignore Condition
+			return location.getDistanceSquared(castlePosition) > 81; // 81 = prophet range + 1 tile out (adjacent spawning)
+		});
+		this.defendersAlive++; // TODO: temporary
+		if (stop === undefined) {
+			// Dijkstras did not find a valid prophet location
+			// Send towards randomEnemyCastlePosition
+			var dijkstras2 = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+			var stop2 = dijkstras2.resolve((vector) => vector.equals(randomEnemyCastlePosition));
+			var traced = Util.trace(dijkstras2, stop2);
+			var offset = traced.subtract(castlePosition);
+			// Build the unit
+			this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
+			// Signal to prophet
+			this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
+			return true;
 		} else {
-			this.action = this.controller.attack(bestDx, bestDy);
+			var traced = Util.trace(dijkstras, stop);
+			var offset = traced.subtract(castlePosition);
+			// Build the unit
+			this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
+			// Signal to prophet
+			this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
 			return true;
 		}
 	}
@@ -290,6 +226,15 @@ export class CastleBot {
 				// Robot is dead
 				this.robots[i] = -1;
 			}
+		}
+	}
+	castleAttack() {
+		var ret = Util.getAttackMove();
+		if (ret === undefined) {
+			return false;
+		} else {
+			this.action = ret;
+			return true;
 		}
 	}
 	turn() {
@@ -342,12 +287,12 @@ export class CastleBot {
 			} else {
 				// TODO: Check progress of other castles/churches - see if we have enough funds to create units for this structure
 				// doChurchPilgrimAndDefenderBuilding;
-				if (this.pilgrimsAlive <= this.defendersAlive) {
-					if (!this.spawnPilgrimForHarvesting()) {
-						this.spawnDefender();
-					}
+				if (this.defendersAlive < this.pilgrimsAlive) {
+					this.spawnLatticeProphet();
 				} else {
-					this.spawnDefender();
+					if (!this.spawnPilgrimForHarvesting()) {
+						this.spawnLatticeProphet();
+					}
 				}
 				if (this.action !== undefined) { // Check if we have spawned a defender or pilgrim
 					// TODO: When to build attacker vs when to setup church vs do nothing
