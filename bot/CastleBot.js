@@ -174,6 +174,7 @@ export class CastleBot {
 		this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
 		// Signal to prophet
 		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y);
+		this.defendersAlive++;
 		return false;
 	}
 	hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
