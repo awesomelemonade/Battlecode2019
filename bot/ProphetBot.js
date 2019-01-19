@@ -6,7 +6,7 @@ import {Vector, totalMoves, totalMoveCosts} from './Library';
 export class ProphetBot {
 	constructor(controller) {
 		this.controller = controller;
-		init();
+		this.init();
 	}
 	init() {
 		// Retrieve signal from castle and set target

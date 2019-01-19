@@ -108,7 +108,7 @@ export class CastleBot {
 		// Build the unit
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target
-		this.controller.signal((Util.encodePosition(resourcePosition) << 1), offset.x * offset.x + offset.y * offset.y)
+		this.controller.signal((Util.encodePosition(resourcePosition) << 1), offset.x * offset.x + offset.y * offset.y);
 		// Temporary set pilgrims array to arbitrary id
 		this.pilgrims[index] = 1234;
 		// Set retrieval of id for next turn
@@ -145,11 +145,35 @@ export class CastleBot {
 		// Build the unit
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target church location - TODO: PilgrimBot has to differentiate building church and harvesting
-		this.controller.signal((Util.encodePosition(resourcePosition) << 1) + 1, offset.x * offset.x + offset.y * offset.y)
+		this.controller.signal((Util.encodePosition(resourcePosition) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
 		return true;
 	}
 	spawnDefender() {
-		
+		// Check costs of prophet
+		if (!Util.isAffordable(SPECS.PROPHET)) {
+			return false;
+		}
+		// Find the first index where its value is -1 in this.pilgrims
+		var index = Util.findIndex(this.defenders, -1);
+		if (index === -1) { // Exhausted all resources this church is assigned to
+			return false;
+		}
+		var resourcePosition = this.resourceOrder[index];
+		// Calculate which adjacent tile to build the prophet using Dijkstras
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+		var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(resourcePosition) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
+		if (stop === undefined) {
+			// Dijkstras did not find a valid prophet location
+			return false;
+		}
+		var traced = Util.trace(dijkstras, stop);
+		var offset = traced.subtract(castlePosition);
+		// Build the unit
+		this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
+		// Signal to prophet
+		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y);
 		return false;
 	}
 	hasHigherAttackPriority(unitType, distanceSquared, bestUnitType, bestDistanceSquared) {
