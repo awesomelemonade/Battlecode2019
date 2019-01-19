@@ -14,9 +14,10 @@ const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
 
-const CASTLE_SPAWN_BITSHIFT = 1;
-const CASTLE_SPAWNTYPE_BITSHIFT = 2;
-const CASTLE_SPAWNTYPE_BITMASK = 0b11; // Pilgrims, Crusaders, Prophets, Preachers
+const CASTLE_PROGRESS_BITSHIFT = 1;
+const CASTLE_PROGRESS_BITS = 7;
+const CASTLE_PROGRESS_BITMASK = Math.pow(2, CASTLE_PROGRESS_BITS) - 1;
+const CASTLE_PROGRESS_SCALE = Math.pow(2, CASTLE_PROGRESS_BITS);
 
 export class CastleBot {
 	constructor(controller) {
@@ -32,6 +33,8 @@ export class CastleBot {
 		this.xBuffers = {};
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
+		this.progress = 0;
+		this.progresses = {};
 		this.retrieveId = false; // Used to keep track of pilgrim/defender ids
 		// This following system limits 1 pilgrim and 1 defender per resource
 		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
@@ -237,43 +240,41 @@ export class CastleBot {
 			return true;
 		}
 	}
+	shouldBuildUnits() {
+		var myScaledProgress = Math.floor(this.progress / this.resourceOrder.length * CASTLE_PROGRESS_SCALE);
+		var numLower = 0;
+		var otherProgresses = Object.values(this.progresses);
+		for (var i = 0; i < otherProgresses.length; i++) {
+			if (otherProgresses[i] < numLower) {
+				numLower++;
+			}
+		}
+		return numLower < Math.min(this.controller.karbonite / 10, this.controller.fuel / 50);
+	}
 	turn() {
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
 		// TODO - need to have retrieval id system or an alternative
 		// removeDeadRobots(this.pilgrims);
 		// removeDeadRobots(this.defenders);
-		// Castle talk for castle locations
-		if (this.controller.me.turn <= 3) {
-			if (this.controller.me.turn <= 2) {
-				// castle talk for castle positions
-				var signal = 0;
-				
-				// Identify as Castle
-				signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
-				
-				// Broadcast x or y position
-				if (this.controller.me.turn === 1) {
-					signal |= ((this.controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-				} else if (this.controller.me.turn === 2) {
-					signal |= ((this.controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
-				}
-				this.controller.castleTalk(signal);
-			}
-			var robots = this.controller.getVisibleRobots();
-			// Retrieve castle positions
-			for (var i = 0; i < robots.length; i++) {
-				if (robots[i].team === this.controller.me.team && robots[i].id !== this.controller.me.id) {
-					var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
+		var robots = this.controller.getVisibleRobots();
+		// Retrieve castle positions
+		this.progresses = {};
+		for (var i = 0; i < robots.length; i++) {
+			if (robots[i].team === this.controller.me.team && robots[i].id !== this.controller.me.id) {
+				var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
+				if (robotIsCastle) {
 					var robotUnusedBit = ((robots[i].castle_talk >>> CASTLE_UNUSED_BITSHIFT) & 1) === 1;
 					var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
-					if (robotIsCastle) {
-						if (robots[i].turn === 1) {
-							this.xBuffers[robots[i].id] = value;
-						} else if (robots[i].turn === 2) {
-							var newCastlePosition = new Vector(this.xBuffers[robots[i].id], value);
-							this.addCastlePosition(newCastlePosition);
-						}
+					if (robots[i].turn === 1) {
+						this.xBuffers[robots[i].id] = value;
+					} else if (robots[i].turn === 2) {
+						var newCastlePosition = new Vector(this.xBuffers[robots[i].id], value);
+						this.addCastlePosition(newCastlePosition);
+					} else {
+						// Retrieve progresses
+						var robotProgress = ((robots[i].castle_Talk >>> CASTLE_PROGRESS_BITSHIFT) & CASTLE_PROGRESS_BITMASK);
+						this.progresses[robots[i].id] = robotProgress;
 					}
 				}
 			}
@@ -290,8 +291,10 @@ export class CastleBot {
 				if (this.defendersAlive < this.pilgrimsAlive) {
 					this.spawnLatticeProphet();
 				} else {
-					if (!this.spawnPilgrimForHarvesting()) {
-						this.spawnLatticeProphet();
+					if (this.shouldBuildUnits()) {
+						if (!this.spawnPilgrimForHarvesting()) {
+							this.spawnLatticeProphet();
+						}
 					}
 				}
 				if (this.action !== undefined) { // Check if we have spawned a defender or pilgrim
@@ -310,6 +313,33 @@ export class CastleBot {
 					// }
 				}
 			}
+		}
+		// Update our own progress variable
+		this.progress = Math.min(this.pilgrimsAlive, this.resourceOrder.length);
+		var scaledProgress = Math.floor(this.progress / this.resourceOrder.length * CASTLE_PROGRESS_SCALE);
+		// Castle talk for castle locations
+		if (this.controller.me.turn <= 2) {
+			// castle talk for castle positions
+			var signal = 0;
+			// Identify as Castle
+			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
+			// Broadcast x or y position
+			if (this.controller.me.turn === 1) {
+				signal |= ((this.controller.me.x & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+			} else if (this.controller.me.turn === 2) {
+				signal |= ((this.controller.me.y & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
+			}
+			// Send castle talk
+			this.controller.castleTalk(signal);
+		} else {
+			// castle talk for castle positions
+			var signal = 0;
+			// Identify as Castle
+			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
+			// Broadcast progress
+			signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
+			// Send castle talk
+			this.controller.castleTalk(signal);
 		}
 		return this.action;
 	}
