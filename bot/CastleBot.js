@@ -151,6 +151,72 @@ export class CastleBot {
 		this.controller.signal((Util.encodePosition(resourcePosition) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
 		return true;
 	}
+	findChurchLocation(startLocation) {
+		// Use true_map for resource finding
+		var self = this;
+		// Do big dijkstras
+		var bigDijkstras = new Dijkstras(this.controller.true_map, startLocation, totalMoves, totalMoveCosts);
+		var bigStop = bigDijkstras.resolve(function(location) {
+			return self.isValidChurchLocation(location);
+		});
+		var bestChurchLocation = undefined;
+		var bestNumResources = 0;
+		var smallDijkstras = new Dijkstras(this.controller.true_map, bigStop, totalMoves, totalMoveCosts);
+		smallDijkstras.resolve(function(location) { // Stop Condition
+			// Count the number of resources within responsible distance
+			var numResources = 0;
+			for (var i = -responsibleDistance; i <= responsibleDistance; i++) {
+				for (var j = -responsibleDistance; j <= responsibleDistance; j++) {
+					if (i * j > responsibleDistance) {
+						continue;
+					}
+					var v = new Vector(location.x + i, location.y + j);
+					if (!Util.outOfBounds(v)) {
+						if (Util.hasResource(v)) {
+							numResources++;
+						}
+					}
+				}
+			}
+			// Compare with bestChurchLocation
+			if (numResources > bestNumResources) {
+				bestChurchLocation = location;
+				bestNumResources = numResources;
+			}
+			return false; // Never stop until exhausted all unignored tiles
+		}, function(location) { // Ignore Condition
+			return !self.isValidChurchLocation(location);
+		});
+		return bestChurchLocation;
+	}
+	isValidChurchLocation(location) {
+		// Ensure not on top of resource
+		if (Util.hasResource(location)) {
+			return false;
+		}
+		// Ensure not too close to other structures
+		for (var i = 0; i < self.structurePositions; i++) {
+			var position = self.structurePositions[i];
+			if (location.getDistanceSquared(position) <= responsibleDistance * 2) {
+				return false;
+			}
+		}
+		// Check if there resources around the responsibleDistance
+		for (var i = -responsibleDistance; i <= responsibleDistance; i++) {
+			for (var j = -responsibleDistance; j <= responsibleDistance; j++) {
+				if (i * j > responsibleDistance) {
+					continue;
+				}
+				var v = new Vector(location.x + i, location.y + j);
+				if (!Util.outOfBounds(v)) {
+					if (Util.hasResource(v)) {
+						return true; // Found resource
+					}
+				}
+			}
+		}
+		return false; // Found no resources
+	}
 	spawnDefender() {
 		// Check costs of prophet
 		if (!Util.isAffordable(SPECS.PROPHET)) {
