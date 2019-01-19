@@ -9,15 +9,17 @@ const responsibleDistance = 5; // Must be less than church's vision radius to de
 // Use r.turn to differentiate castle vs other units?
 // castle_talk among castles for the first few turns - 8 bits
 const CASTLE_IDENTIFIER_BITSHIFT = 0; // Differentiate Castle and other units
-const CASTLE_UNUSED_BITSHIFT = 1; // Previously: Temporary leader identification system
+const CHURCH_IDENTIFIER_BITSHIFT = 1; // Differentiate Church and other units
 const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
 
-const CASTLE_PROGRESS_BITSHIFT = 1;
-const CASTLE_PROGRESS_BITS = 7;
+const CASTLE_PROGRESS_BITSHIFT = 2;
+const CASTLE_PROGRESS_BITS = 6;
 const CASTLE_PROGRESS_BITMASK = Math.pow(2, CASTLE_PROGRESS_BITS) - 1;
 const CASTLE_PROGRESS_SCALE = Math.pow(2, CASTLE_PROGRESS_BITS);
+
+const CASTLE_BUILDCHURCH_BITSHIFT = 1;
 
 export class CastleBot {
 	constructor(controller) {
@@ -31,6 +33,8 @@ export class CastleBot {
 		this.structurePositions = [];
 		this.enemyCastlePredictions = [];
 		this.xBuffers = {};
+		this.numChurchesBuilding = 0;
+		this.buildingChurchCastleTalkQueue = [];
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
 		this.progress = 0;
@@ -149,6 +153,12 @@ export class CastleBot {
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target church location - TODO: PilgrimBot has to differentiate building church and harvesting
 		this.controller.signal((Util.encodePosition(resourcePosition) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
+		// Add to castle talk queue
+		this.buildingChurchCastleTalkQueue.push(churchLocation.x);
+		this.buildingChurchCastleTalkQueue.push(churchLocation.y);
+		// Increment numChurchesBuilding
+		this.numChurchesBuilding++;
+		// Return success
 		return true;
 	}
 	findChurchLocation(startLocation) {
@@ -325,23 +335,48 @@ export class CastleBot {
 		// removeDeadRobots(this.defenders);
 		var robots = this.controller.getVisibleRobots();
 		// Retrieve castle positions
-		this.progresses = {};
+		this.progresses = {}; // Empty out progresses - conveniently handles castles/churches that have died
 		for (var i = 0; i < robots.length; i++) {
+			// Only read our own castle talks excluding our own
 			if (robots[i].team === this.controller.me.team && robots[i].id !== this.controller.me.id) {
 				var robotIsCastle = ((robots[i].castle_talk >>> CASTLE_IDENTIFIER_BITSHIFT) & 1) === 1;
 				if (robotIsCastle) {
-					var robotUnusedBit = ((robots[i].castle_talk >>> CASTLE_UNUSED_BITSHIFT) & 1) === 1;
 					var value = (robots[i].castle_talk >>> CASTLE_LOCATION_BITSHIFT) & CASTLE_LOCATION_BITMASK;
 					if (robots[i].turn === 1) {
 						this.xBuffers[robots[i].id] = value;
 					} else if (robots[i].turn === 2) {
 						var newCastlePosition = new Vector(this.xBuffers[robots[i].id], value);
 						this.addCastlePosition(newCastlePosition);
+						this.xBuffers[robots[i].id] = undefined;
 					} else {
-						// Retrieve progresses
-						var robotProgress = ((robots[i].castle_Talk >>> CASTLE_PROGRESS_BITSHIFT) & CASTLE_PROGRESS_BITMASK);
-						this.progresses[robots[i].id] = robotProgress;
+						// Retrieve whether castle is building church
+						var buildChurch = ((robots[i].castle_talk >>> CASTLE_BUILDCHURCH_BITSHIFT) & 1) === 1;
+						if (buildChurch) {
+							if (this.xBuffers[robots[i].id] === undefined) {
+								this.xBuffers[robots[i].id] = value;
+								this.numChurchesBuilding++;
+							} else {
+								var churchPosition = new Vector(this.xBuffers[robots[i].id], value);
+								this.addChurchPosition(churchPositions);
+								this.xBuffers[robots[i].id] = undefined;
+							}
+						} else {
+							// Retrieve progresses
+							var robotProgress = ((robots[i].castle_talk >>> CASTLE_PROGRESS_BITSHIFT) & CASTLE_PROGRESS_BITMASK);
+							this.progresses[robots[i].id] = robotProgress;
+						}
 					}
+				}
+				var robotIsChurch = ((robots[i].castle_talk >>> CHURCH_IDENTIFIER_BITSHIFT) & 1) === 1;
+				if (robotIsChurch) {
+					// TODO: make ChurchBot use this system - only broadcast progress?
+					// Decrement numChurchesBuilding
+					if (robots[i].turn === 1) {
+						this.numChurchesBuilding--;
+					}
+					// Retrieve progresses
+					var robotProgress = ((robots[i].castle_talk >>> CASTLE_PROGRESS_BITSHIFT) & CASTLE_PROGRESS_BITMASK);
+					this.progresses[robots[i].id] = robotProgress;
 				}
 			}
 		}
@@ -359,24 +394,22 @@ export class CastleBot {
 				} else {
 					if (this.shouldBuildUnits()) {
 						if (!this.spawnPilgrimForHarvesting()) {
-							this.spawnLatticeProphet();
+							// TODO: when to build pilgrim for church, save for church, or spawn lattice prophet
+							// If already spawned for church
+							// Save for church
+							if (this.controller.karbonite > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding + 50 &&
+									this.controller.fuel > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 100) {
+								// Try spawn for church
+								var churchLocation = findChurchLocation(Vector.ofRobotPosition(this.controller.me));
+								if (churchLocation === undefined) {
+									// No more places to build church - spawn lattice prophet
+									this.spawnLatticeProphet();
+								} else {
+									this.spawnPilgrimForChurch(churchLocation);
+								}
+							}
 						}
 					}
-				}
-				if (this.action !== undefined) { // Check if we have spawned a defender or pilgrim
-					// TODO: When to build attacker vs when to setup church vs do nothing
-					// TODO: Should churches be able to setup a pilgrim to build churches
-					// castle talk "progress" in creating pilgrims/defenders
-					// retrieve castle talks from all units to calculate totalProgress
-					// TODO: Figure out the way to decide "itIsThisCastleThatShouldBuildTheChurch"
-					// if (totalProgress > arbitraryThreshold && itIsThisCastleThatShouldBuildTheChurch) {
-					// 		queue a castle talk for a church to be built
-					//		spawn a pilgrim
-					//		send a signal to the pilgrim to build a church
-					// }
-					// for (go through the queue) {
-					// 		execute castleTalk
-					// }
 				}
 			}
 		}
@@ -402,8 +435,14 @@ export class CastleBot {
 			var signal = 0;
 			// Identify as Castle
 			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
-			// Broadcast progress
-			signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
+			// Checks if we have any churches to castle talk
+			if (this.buildingChurchCastleTalkQueue.length > 0) {
+				signal |= (1 << CASTLE_BUILDCHURCH_BITSHIFT);
+				signal |= this.buildingChurchCastleTalkQueue.shift(); // similar to queue.poll() in java
+			} else {
+				// Broadcast progress
+				signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
+			}
 			// Send castle talk
 			this.controller.castleTalk(signal);
 		}
