@@ -4,7 +4,9 @@ import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 
 // Castles & Churches must not have overlapping responsible tiles
+const responsibleDistanceRadius = 2;
 const responsibleDistance = 5; // Must be less than church's vision radius to detect dead pilgrims & defenders
+const responsibleDistanceDoubled = Math.pow(2 * Math.sqrt(responsibleDistance), 2);
 
 // Use r.turn to differentiate castle vs other units?
 // castle_talk among castles for the first few turns - 8 bits
@@ -152,7 +154,7 @@ export class CastleBot {
 		// Build the unit
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target church location - TODO: PilgrimBot has to differentiate building church and harvesting
-		this.controller.signal((Util.encodePosition(resourcePosition) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
+		this.controller.signal((Util.encodePosition(churchLocation) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
 		// Add to castle talk queue
 		this.buildingChurchCastleTalkQueue.push(churchLocation.x);
 		this.buildingChurchCastleTalkQueue.push(churchLocation.y);
@@ -205,16 +207,16 @@ export class CastleBot {
 			return false;
 		}
 		// Ensure not too close to other structures
-		for (var i = 0; i < self.structurePositions; i++) {
-			var position = self.structurePositions[i];
-			if (location.getDistanceSquared(position) <= responsibleDistance * 2) {
+		for (var i = 0; i < this.structurePositions.length; i++) {
+			var position = this.structurePositions[i];
+			if (location.getDistanceSquared(position) <= responsibleDistanceDoubled) {
 				return false;
 			}
 		}
 		// Check if there resources around the responsibleDistance
-		for (var i = -responsibleDistance; i <= responsibleDistance; i++) {
-			for (var j = -responsibleDistance; j <= responsibleDistance; j++) {
-				if (i * j > responsibleDistance) {
+		for (var i = -responsibleDistanceRadius; i <= responsibleDistanceRadius; i++) {
+			for (var j = -responsibleDistanceRadius; j <= responsibleDistanceRadius; j++) {
+				if (i * i + j * j > responsibleDistance) {
 					continue;
 				}
 				var v = new Vector(location.x + i, location.y + j);
@@ -357,7 +359,7 @@ export class CastleBot {
 								this.numChurchesBuilding++;
 							} else {
 								var churchPosition = new Vector(this.xBuffers[robots[i].id], value);
-								this.addChurchPosition(churchPositions);
+								this.addChurchPosition(churchPosition);
 								this.xBuffers[robots[i].id] = undefined;
 							}
 						} else {
@@ -399,7 +401,7 @@ export class CastleBot {
 							if (this.controller.karbonite > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding + 50 &&
 									this.controller.fuel > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 100) {
 								// Try spawn for church - TODO: Which castle should spawn the church?
-								var churchLocation = findChurchLocation(Vector.ofRobotPosition(this.controller.me));
+								var churchLocation = this.findChurchLocation(Vector.ofRobotPosition(this.controller.me));
 								if (churchLocation === undefined) {
 									// No more places to build church - spawn lattice prophet
 									this.spawnLatticeProphet();

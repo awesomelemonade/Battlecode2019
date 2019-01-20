@@ -39,26 +39,27 @@ export class ChurchBot {
 		this.pilgrimsAlive = 0;
 		this.defendersAlive = 0;
 		// Calculate resourceOrder - resourceOrder should not change after construction
-		var castlePosition = Vector.ofRobotPosition(this.controller.me);
-		this.addCastlePosition(castlePosition);
-		this.resourceOrder = this.getResourceOrder(castlePosition);
+		var churchPosition = Vector.ofRobotPosition(this.controller.me);
+		this.resourceOrder = this.getResourceOrder(churchPosition);
 		for (var i = 0; i < this.resourceOrder.length; i++) {
 			this.pilgrims.push(-1);
 			this.defenders.push(-1);
 		}
+		this.controller.log("Resource Order: " + this.resourceOrder);
 		// Find and communicate to the pilgrim that built this church its target resource
-		var robots = controller.getVisibleRobots();
+		var robots = this.controller.getVisibleRobots();
 		for (var i = 0; i < robots.length; i++) {
 			var robot = robots[i];
 			if (robot.unit === SPECS.PILGRIM) {
-				var distX = robot.x - controller.me.x;
-				var distY = robot.y - controller.me.y;
+				var distX = robot.x - this.controller.me.x;
+				var distY = robot.y - this.controller.me.y;
 				var distSquared = distX * distX + distY * distY;
 				if (distSquared <= 2) {
 					// Find the first index where its value is -1 in this.pilgrims
 					var index = Util.findIndex(this.pilgrims, -1);
 					var resourcePosition = this.resourceOrder[index];
 					// Signal to pilgrim the target
+					this.controller.log("Signaling: " + resourcePosition);
 					this.controller.signal(Util.encodePosition(resourcePosition), distSquared);
 					// Temporary set pilgrims array to arbitrary id
 					this.pilgrims[index] = 1234;
@@ -176,12 +177,21 @@ export class ChurchBot {
 		this.defendersAlive++;
 		return true;
 	}
+	randomPassableVector() {
+		var x = Math.floor(Math.random() * this.controller.map.length);
+		var y = Math.floor(Math.random() * this.controller.map[0].length);
+		while (this.controller.map[x][y] === false) {
+			x = Math.floor(Math.random() * this.controller.map.length);
+			y = Math.floor(Math.random() * this.controller.map[0].length);
+		}
+		return new Vector(x, y);
+	}
 	spawnLatticeProphet() {
 		// Check costs of prophet
 		if (!Util.isAffordable(SPECS.PROPHET)) {
 			return false;
 		}
-		var randomEnemyCastlePosition = this.enemyCastlePredictions[Math.floor(Math.random() * this.enemyCastlePredictions.length)];
+		var randomEnemyCastlePosition = this.randomPassableVector();
 		// Calculate which adjacent tile to build the prophet using Dijkstras
 		var castlePosition = Vector.ofRobotPosition(this.controller.me);
 		var start = Util.getAdjacentPassable(castlePosition);

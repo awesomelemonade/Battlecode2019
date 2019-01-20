@@ -15,7 +15,7 @@ export class PilgrimBot {
 			this.controller.log("Unable to find castle signal?");
 		} else {
 			this.searchingForTarget = false;
-			this.isBuildingChurch = (this.castleSignal & 1) === 1;
+			this.isBuildingChurch = (castleSignal & 1) === 1;
 			this.target = Util.decodePosition(castleSignal >>> 1);
 			this.controller.log("Setting target: " + this.target);
 		}
