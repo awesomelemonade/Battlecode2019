@@ -36,6 +36,7 @@ export class Vector {
 
 export var totalMoves = [];
 export var totalMoveCosts = [];
+export var constantMoveCosts = [];
 
 function addMove(x, y, cost) {
 	totalMoves.push(new Vector(x, y));
@@ -86,3 +87,6 @@ addMoves(10);
 var temp = filter(totalMoves, totalMoveCosts, 4);
 totalMoves = temp[0];
 totalMoveCosts = temp[1];
+for (var i = 0; i < totalMoves.length; i++) {
+	constantMoveCosts.push(1);
+}

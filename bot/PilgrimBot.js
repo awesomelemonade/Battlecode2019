@@ -1,5 +1,5 @@
 import {SPECS} from 'battlecode'
-import {Vector, totalMoves, totalMoveCosts} from './Library';
+import {Vector, totalMoves, totalMoveCosts, constantMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 import * as Util from './Util';
 
@@ -63,7 +63,7 @@ export class PilgrimBot {
 	getMoveForBuildChurch() {
 		var self = this;
 		var start = Vector.ofRobotPosition(this.controller.me);
-		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, constantMoveCosts);
 		var stop = dijkstras.resolve(function(location) {
 			return location.isAdjacentTo(self.target);
 		});
