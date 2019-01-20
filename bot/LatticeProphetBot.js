@@ -10,7 +10,9 @@ export class ProphetBot {
 	}
 	init() {
 		// Retrieve signal from castle and set target
-		var castleSignal = Util.getInitialCastleOrChurchSignal();
+		var castleRobot = Util.getInitialCastleOrChurch();
+		this.turnOffset = castleRobot.turn - this.controller.me.turn;
+		var castleSignal = castleRobot.signal;
 		if (castleSignal === -1) {
 			this.controller.log("Unable to find castle signal? " + Vector.ofRobotPosition(this.controller.me) + " - " + this.controller.me.turn);
 		} else {
@@ -37,7 +39,8 @@ export class ProphetBot {
 		var prophetPosition = Vector.ofRobotPosition(this.controller.me);
 		var dijkstras = new Dijkstras(this.controller.map, prophetPosition, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(function(location) { // Stop Condition
-			return (location.x + location.y) % 2 === 0 && (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
+			return (((self.turnOffset + self.controller.me.turn) < 750) ? ((location.x + location.y) % 2 === 0) : ((location.x + location.y) % 2 === 0 || location.y % 2 === 0)) 
+					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
 		}, function(location) { // Ignore Condition
 			return self.controller.robot_map[location.x][location.y] === -1; // Ignore tiles outside of our vision range
 		});

@@ -282,13 +282,15 @@ export class CastleBot {
 		if (!Util.isAffordable(SPECS.PROPHET)) {
 			return false;
 		}
+		var self = this;
 		var randomEnemyCastlePosition = this.enemyCastlePredictions[Math.floor(Math.random() * this.enemyCastlePredictions.length)];
 		// Calculate which adjacent tile to build the prophet using Dijkstras
 		var castlePosition = Vector.ofRobotPosition(this.controller.me);
 		var start = Util.getAdjacentPassable(castlePosition);
 		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(function(location) { // Stop Condition
-			return (location.x + location.y) % 2 === 0 && (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
+			return (((self.controller.me.turn) < 750) ? ((location.x + location.y) % 2 === 0) : ((location.x + location.y) % 2 === 0 || location.y % 2 === 0)) 
+					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
 		}, function(location) { // Ignore Condition
 			return location.getDistanceSquared(castlePosition) > 81; // 81 = prophet range + 1 tile out (adjacent spawning)
 		});

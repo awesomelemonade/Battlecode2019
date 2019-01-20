@@ -124,6 +124,24 @@ export function getAdjacentPassable(position) {
 	return ret;
 }
 
+export function getInitialCastleOrChurch() {
+	// Retrieve signal from castle and set target
+	var robots = controller.getVisibleRobots();
+	for (var i = 0; i < robots.length; i++) {
+		var robot = robots[i];
+		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
+				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) ) {
+			var distX = robot.x - controller.me.x;
+			var distY = robot.y - controller.me.y;
+			var distSquared = distX * distX + distY * distY;
+			if (distSquared <= 2 && distSquared === robot.signal_radius) {
+				return robot;
+			}
+		}
+	}
+	return null;
+}
+
 export function getInitialCastleOrChurchSignal() {
 	// Retrieve signal from castle and set target
 	var robots = controller.getVisibleRobots();
