@@ -128,7 +128,7 @@ export class PilgrimBot {
 			// Retrieve signal from castle and set target
 			var castleSignal = Util.getInitialChurchSignal();
 			if (castleSignal === -1) {
-				this.controller.log("Unable to find church signal?");
+				this.controller.log("Unable to find church signal? " + Vector.ofRobotPosition(this.controller.me));
 			} else {
 				this.target = Util.decodePosition(castleSignal);
 				this.controller.log("Setting target: " + this.target);

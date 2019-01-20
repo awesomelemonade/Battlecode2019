@@ -129,7 +129,8 @@ export function getInitialCastleOrChurchSignal() {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
-		if ((robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) && controller.isRadioing(robot)) {
+		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
+				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) ) {
 			var distX = robot.x - controller.me.x;
 			var distY = robot.y - controller.me.y;
 			var distSquared = distX * distX + distY * distY;
@@ -146,7 +147,7 @@ export function getInitialChurchSignal() {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
-		if (robot.unit === SPECS.CHURCH && controller.isRadioing(robot)) {
+		if (robot.team === controller.me.team && robot.unit === SPECS.CHURCH && controller.isRadioing(robot)) {
 			var distX = robot.x - controller.me.x;
 			var distY = robot.y - controller.me.y;
 			var distSquared = distX * distX + distY * distY;

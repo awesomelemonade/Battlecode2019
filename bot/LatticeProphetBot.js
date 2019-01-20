@@ -44,7 +44,7 @@ export class ProphetBot {
 		if (stop === undefined) {
 			// No visible valid stop areas
 			// Go towards target to search for more stop areas
-			return getMoveForTarget();
+			return this.getMoveForTarget();
 		} else {
 			var move = Util.getMove(dijkstras, prophetPosition, stop);
 			if (!move.isZero()) {

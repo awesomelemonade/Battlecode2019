@@ -49,7 +49,7 @@ export class ChurchBot {
 		var robots = this.controller.getVisibleRobots();
 		for (var i = 0; i < robots.length; i++) {
 			var robot = robots[i];
-			if (robot.unit === SPECS.PILGRIM) {
+			if (robot.team === this.controller.me.team && robot.unit === SPECS.PILGRIM) {
 				var distX = robot.x - this.controller.me.x;
 				var distY = robot.y - this.controller.me.y;
 				var distSquared = distX * distX + distY * distY;
@@ -242,12 +242,14 @@ export class ChurchBot {
 		// removeDeadRobots(this.pilgrims);
 		// removeDeadRobots(this.defenders);
 		// Figure out actions
-		if (this.defendersAlive < this.pilgrimsAlive && this.pilgrimsAlive > (this.resourceOrder.length / 2)) {
-			this.spawnLatticeProphet();
-		} else {
-			if (!this.spawnPilgrimForHarvesting()) {
-				if (this.defendersAlive < this.pilgrimsAlive || (this.controller.karbonite > 100 && this.controller.fuel > 200)) {
-					this.spawnLatticeProphet();
+		if (this.controller.me.turn > 1) { // Skip first turn due to signalling of pilgrim that made the church
+			if (this.defendersAlive < this.pilgrimsAlive && this.pilgrimsAlive > (this.resourceOrder.length / 2)) {
+				this.spawnLatticeProphet();
+			} else {
+				if (!this.spawnPilgrimForHarvesting()) {
+					if (this.defendersAlive < this.pilgrimsAlive || (this.controller.karbonite > 100 && this.controller.fuel > 200)) {
+						this.spawnLatticeProphet();
+					}
 				}
 			}
 		}
