@@ -336,7 +336,7 @@ export class CastleBot {
 		var numLower = 0;
 		var otherProgresses = Object.values(this.progresses);
 		for (var i = 0; i < otherProgresses.length; i++) {
-			if (otherProgresses[i] < numLower) {
+			if (otherProgresses[i] < myScaledProgress) {
 				numLower++;
 			}
 		}
