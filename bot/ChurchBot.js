@@ -46,6 +46,33 @@ export class ChurchBot {
 			this.pilgrims.push(-1);
 			this.defenders.push(-1);
 		}
+		// Find and communicate to the pilgrim that built this church its target resource
+		var robots = controller.getVisibleRobots();
+		for (var i = 0; i < robots.length; i++) {
+			var robot = robots[i];
+			if (robot.unit === SPECS.PILGRIM) {
+				var distX = robot.x - controller.me.x;
+				var distY = robot.y - controller.me.y;
+				var distSquared = distX * distX + distY * distY;
+				if (distSquared <= 2) {
+					// Find the first index where its value is -1 in this.pilgrims
+					var index = Util.findIndex(this.pilgrims, -1);
+					var resourcePosition = this.resourceOrder[index];
+					// Signal to pilgrim the target
+					this.controller.signal(Util.encodePosition(resourcePosition), distSquared);
+					// Temporary set pilgrims array to arbitrary id
+					this.pilgrims[index] = 1234;
+					// Set retrieval of id for next turn
+					// Problem: The built robot gets to move before castle can retrieve id
+					/*this.retrieveId = true;
+					this.retrieveArray = this.pilgrims;
+					this.retrieveIndex = index;
+					this.retrieveOffset = offset;*/
+					this.pilgrimsAlive++;
+					break;
+				}
+			}
+		}
 	}
 	getResourceOrder(position) {
 		var start = Util.getAdjacentPassable(position);
