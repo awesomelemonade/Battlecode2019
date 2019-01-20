@@ -247,7 +247,7 @@ export class ChurchBot {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {
-					if (this.defendersAlive < this.pilgrimsAlive || (this.controller.karbonite > 100 && this.controller.fuel > 200)) {
+					if (this.defendersAlive < this.pilgrimsAlive || (this.controller.karbonite > 2000 && this.controller.fuel > 5000)) {
 						this.spawnLatticeProphet();
 					}
 				}

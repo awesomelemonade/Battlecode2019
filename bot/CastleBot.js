@@ -160,6 +160,8 @@ export class CastleBot {
 		this.buildingChurchCastleTalkQueue.push(churchLocation.y);
 		// Increment numChurchesBuilding
 		this.numChurchesBuilding++;
+		// Add Church
+		this.addChurchPosition(churchLocation);
 		// Return success
 		return true;
 	}
