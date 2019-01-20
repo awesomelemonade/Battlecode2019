@@ -54,8 +54,9 @@ export class ChurchBot {
 				var distY = robot.y - this.controller.me.y;
 				var distSquared = distX * distX + distY * distY;
 				if (distSquared <= 2) {
-					// Find the first index where its value is -1 in this.pilgrims
-					var index = Util.findIndex(this.pilgrims, -1);
+					var pilgrimPosition = Vector.ofRobotPosition(robot);
+					// Find nearest resource to pilgrim
+					var index = this.findNearestResourceIndex(pilgrimPosition);
 					var resourcePosition = this.resourceOrder[index];
 					// Signal to pilgrim the target
 					this.controller.signal(Util.encodePosition(resourcePosition), distSquared);
@@ -72,6 +73,21 @@ export class ChurchBot {
 				}
 			}
 		}
+	}
+	findNearestResourceIndex(pilgrimPosition) {
+		var bestIndex = -1;
+		var bestDistance = 99999;
+		for (var i = 0; i < this.pilgrims.length; i++) {
+			if (this.pilgrims[i] === -1) {
+				var resourcePosition = this.resourceOrder[i];
+				var distance = pilgrimPosition.getDistanceSquared(resourcePosition);
+				if (bestIndex === -1 || distance < bestDistance) {
+					bestIndex = i;
+					bestDistance = distance;
+				}
+			}
+		}
+		return bestIndex;
 	}
 	getResourceOrder(position) {
 		var start = Util.getAdjacentPassable(position);

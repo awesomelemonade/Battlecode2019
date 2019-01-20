@@ -68,15 +68,21 @@ export class PilgrimBot {
 			return location.isAdjacentTo(self.target);
 		});
 		if (start.equals(stop)) { // Move is zero - we reached our target!
+			// Check if Church is affordable
+			if (!Util.isAffordable(SPECS.CHURCH)) {
+				return undefined;
+			}
 			// Check if this.target is actually empty and church is affordable
-			if (this.controller.robot_map[this.target.x][this.target.y] === 0 && Util.isAffordable(SPECS.CHURCH)) {
+			if (this.controller.robot_map[this.target.x][this.target.y] === 0) {
+				this.controller.log("Building church at: " + this.target);
+				// Build the church
+				var offset = this.target.subtract(start);
+				var action = this.controller.buildUnit(SPECS.CHURCH, offset.x, offset.y);
 				// Set isBuildingChurch to false
 				this.isBuildingChurch = false;
 				// Queue a get harvest target from church
 				this.searchingForTarget = true;
-				// Build the church
-				var offset = this.target.subtract(start);
-				return this.controller.buildUnit(SPECS.CHURCH, offset.x, offset.y);
+				return action;
 			} else {
 				// Target is occupied!
 				return undefined;
