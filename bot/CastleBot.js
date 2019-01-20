@@ -165,16 +165,22 @@ export class CastleBot {
 		// Return success
 		return true;
 	}
-	findChurchLocation(startLocation) {
+	// TODO: temporary null vs undefined returning
+	findChurchLocation() {
 		// Use true_map for resource finding
 		var self = this;
 		// Do big dijkstras
-		var bigDijkstras = new Dijkstras(this.controller.true_map, startLocation, totalMoves, totalMoveCosts);
+		var bigDijkstras = new Dijkstras(this.controller.true_map, this.castlePositions, totalMoves, totalMoveCosts);
 		var bigStop = bigDijkstras.resolve(function(location) {
 			return self.isValidChurchLocation(location);
 		});
 		if (bigStop === undefined) {
 			return undefined;
+		}
+		var traced = Util.trace(bigDijkstras, bigStop);
+		if (!traced.equals(Vector.ofRobotPosition(this.controller.me))) {
+			this.controller.log("Deferring creation of church pilgrim to castle at " + traced);
+			return null; // lol there has to be a better way
 		}
 		var bestChurchLocation = undefined;
 		var bestNumResources = 0;
@@ -421,12 +427,14 @@ export class CastleBot {
 									this.spawnLatticeProphet();
 								} else {
 									// Try spawn for church - TODO: Which castle should spawn the church?
-									var churchLocation = this.findChurchLocation(Vector.ofRobotPosition(this.controller.me));
+									var churchLocation = this.findChurchLocation();
 									if (churchLocation === undefined) {
 										// No more places to build church - spawn lattice prophet
 										this.spawnLatticeProphet();
 									} else {
-										this.spawnPilgrimForChurch(churchLocation);
+										if (churchLocation !== null) {
+											this.spawnPilgrimForChurch(churchLocation);
+										}
 									}
 								}
 							}
@@ -476,6 +484,10 @@ export class CastleBot {
 	}
 	addCastlePosition(castlePosition) {
 		this.castlePositions.push(castlePosition);
+		this.castlePositions.sort(function(a, b) {
+			return a.hash() - b.hash();
+		});
+		this.controller.log("Castle Positions: " + this.castlePositions);
 		this.structurePositions.push(castlePosition);
 		this.addEnemyPrediction(castlePosition);
 	}
