@@ -259,11 +259,11 @@ export class ChurchBot {
 		// removeDeadRobots(this.defenders);
 		// Figure out actions
 		if (this.controller.me.turn > 1) { // Skip first turn due to signalling of pilgrim that made the church
-			if (this.defendersAlive < this.pilgrimsAlive * (this.controller.me.turn / 100) && this.pilgrimsAlive > (this.resourceOrder.length / 2)) {
+			if (this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {
-					if (this.defendersAlive < this.pilgrimsAlive || (this.controller.karbonite > 2000 && this.controller.fuel > 5000)) {
+					if (this.controller.karbonite > 2000 && this.controller.fuel > 5000) {
 						this.spawnLatticeProphet();
 					}
 				}

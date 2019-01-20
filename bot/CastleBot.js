@@ -411,7 +411,8 @@ export class CastleBot {
 			} else {
 				// TODO: Check progress of other castles/churches - see if we have enough funds to create units for this structure
 				// doChurchPilgrimAndDefenderBuilding;
-				if (this.defendersAlive < this.pilgrimsAlive) {
+				if (this.defendersAlive < this.pilgrimsAlive / 2) {
+					// Castles can defend themselves
 					this.spawnLatticeProphet();
 				} else {
 					if (this.shouldBuildUnits()) {
