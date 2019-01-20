@@ -49,6 +49,10 @@ export class ChurchBot {
 		var robots = this.controller.getVisibleRobots();
 		for (var i = 0; i < robots.length; i++) {
 			var robot = robots[i];
+			if (!this.controller.isVisible(robot)) {
+				// Ignore robots that are not visible - signalling
+				continue;
+			}
 			if (robot.team === this.controller.me.team && robot.unit === SPECS.PILGRIM) {
 				var distX = robot.x - this.controller.me.x;
 				var distY = robot.y - this.controller.me.y;

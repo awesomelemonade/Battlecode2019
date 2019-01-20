@@ -129,6 +129,10 @@ export function getInitialCastleOrChurch() {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
+		if (!controller.isVisible(robot)) {
+			// Ignore robots that are not visible - signalling
+			continue;
+		}
 		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
 				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) ) {
 			var distX = robot.x - controller.me.x;
@@ -147,6 +151,10 @@ export function getInitialCastleOrChurchSignal() {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
+		if (!controller.isVisible(robot)) {
+			// Ignore robots that are not visible - signalling
+			continue;
+		}
 		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
 				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) ) {
 			var distX = robot.x - controller.me.x;
@@ -165,6 +173,10 @@ export function getInitialChurchSignal() {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
+		if (!controller.isVisible(robot)) {
+			// Ignore robots that are not visible - signalling
+			continue;
+		}
 		if (robot.team === controller.me.team && robot.unit === SPECS.CHURCH && controller.isRadioing(robot)) {
 			var distX = robot.x - controller.me.x;
 			var distY = robot.y - controller.me.y;
@@ -182,6 +194,10 @@ export function getVisibleEnemies() {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
+		if (!controller.isVisible(robot)) {
+			// Ignore robots that are not visible - signalling
+			continue;
+		}
 		if (robot.team !== controller.me.team) {
 			ret.push(robot);
 		}
