@@ -170,7 +170,7 @@ export class PilgrimBot {
 			} else {
 				destination = start.add(Util.getMoveVector(action));
 			}
-			if (this.enemyCanSee(destination)) {
+			if (this.enemyCanSee(visibleEnemies, destination)) {
 				return this.getKiteMove();
 			} else {
 				return action;
