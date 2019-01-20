@@ -52,8 +52,10 @@ export class PilgrimBot {
 			// Cannot reach
 			return undefined;
 		} else {
-			var move = Util.getMove(dijkstras, prophetPosition, stop);
-			if (!move.isZero()) {
+			if (prophetPosition.equals(stop)) { // Move is zero - we reached our target!
+				return this.controller.mine();
+			} else {
+				var move = Util.getMove(dijkstras, prophetPosition, stop);
 				return this.controller.move(move.x, move.y);
 			}
 		}
