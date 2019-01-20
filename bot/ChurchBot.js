@@ -45,7 +45,6 @@ export class ChurchBot {
 			this.pilgrims.push(-1);
 			this.defenders.push(-1);
 		}
-		this.controller.log("Resource Order: " + this.resourceOrder);
 		// Find and communicate to the pilgrim that built this church its target resource
 		var robots = this.controller.getVisibleRobots();
 		for (var i = 0; i < robots.length; i++) {
@@ -59,7 +58,6 @@ export class ChurchBot {
 					var index = Util.findIndex(this.pilgrims, -1);
 					var resourcePosition = this.resourceOrder[index];
 					// Signal to pilgrim the target
-					this.controller.log("Signaling: " + resourcePosition);
 					this.controller.signal(Util.encodePosition(resourcePosition), distSquared);
 					// Temporary set pilgrims array to arbitrary id
 					this.pilgrims[index] = 1234;

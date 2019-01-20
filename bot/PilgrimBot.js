@@ -10,9 +10,9 @@ export class PilgrimBot {
 	}
 	init() {
 		// Retrieve signal from castle and set target
-		var castleSignal = Util.getInitialCastleSignal();
+		var castleSignal = Util.getInitialCastleOrChurchSignal();
 		if (castleSignal === -1) {
-			this.controller.log("Unable to find castle signal?");
+			this.controller.log("Unable to find castle signal? " + Vector.ofRobotPosition(this.controller.me));
 		} else {
 			this.searchingForTarget = false;
 			this.isBuildingChurch = (castleSignal & 1) === 1;
@@ -86,25 +86,32 @@ export class PilgrimBot {
 			return this.controller.move(move.x, move.y);
 		}
 	}
+	enemyCanSee(visibleEnemies, position) {
+		for (var j = 0; j < visibleEnemies.length; j++) {
+			var enemy = visibleEnemies[j];
+			if (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM) {
+				continue;
+			}
+			var enemyPosition = Vector.ofRobotPosition(enemy);
+			var distanceSquared = position.getDistanceSquared(enemyPosition);
+			if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
+				return true;
+			}
+		}
+		return false;
+	}
 	getKiteMove() {
+		var visibleEnemies = Util.getVisibleEnemies();
+		var currentPosition = Vector.ofRobotPosition(this.controller.me);
+		// Check if enemies can see currentPosition
+		if (!this.enemyCanSee(visibleEnemies, currentPosition)) {
+			return undefined; // We have better things to do than standing still
+		}
 		var bestMove = null;
 		for (var i = 0; i < totalMoves.length; i++) {
 			var move = totalMoves[i];
 			var endPosition = currentPosition.add(move);
-			var enemyCanSee = false;
-			for (var j = 0; j < visibleEnemies.length; j++) {
-				var enemy = visibleEnemies[j];
-				if (enemy.unit === SPECS.CASTLE || enemy.unit === SPECS.CHURCH || enemy.unit === SPECS.PILGRIM) {
-					continue;
-				}
-				var enemyPosition = Vector.ofRobotPosition(enemy);
-				var distanceSquared = endPosition.getDistanceSquared(enemyPosition);
-				if (distanceSquared <= SPECS.UNITS[enemy.unit].VISION_RADIUS) {
-					enemyCanSee = true;
-					break;
-				}
-			}
-			if (!enemyCanSee) {
+			if (!this.enemyCanSee(visibleEnemies, endPosition)) {
 				bestMove = move;
 				break;
 			}

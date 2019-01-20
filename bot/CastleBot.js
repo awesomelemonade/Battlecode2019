@@ -439,7 +439,8 @@ export class CastleBot {
 			// Checks if we have any churches to castle talk
 			if (this.buildingChurchCastleTalkQueue.length > 0) {
 				signal |= (1 << CASTLE_BUILDCHURCH_BITSHIFT);
-				signal |= this.buildingChurchCastleTalkQueue.shift(); // similar to queue.poll() in java
+				// array.shift() is similar to queue.poll() in Java
+				signal |= ((this.buildingChurchCastleTalkQueue.shift() & CASTLE_LOCATION_BITMASK) << CASTLE_LOCATION_BITSHIFT);
 			} else {
 				// Broadcast progress
 				signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
