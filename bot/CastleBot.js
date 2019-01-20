@@ -173,19 +173,22 @@ export class CastleBot {
 		});
 		var bestChurchLocation = undefined;
 		var bestNumResources = 0;
+		var bestResourceDistance = 0;
 		var smallDijkstras = new Dijkstras(this.controller.true_map, bigStop, totalMoves, totalMoveCosts);
 		smallDijkstras.resolve(function(location) { // Stop Condition
 			// Count the number of resources within responsible distance
 			var numResources = 0;
-			for (var i = -responsibleDistance; i <= responsibleDistance; i++) {
-				for (var j = -responsibleDistance; j <= responsibleDistance; j++) {
-					if (i * j > responsibleDistance) {
+			var resourceDistance = 0;
+			for (var i = -responsibleDistanceRadius; i <= responsibleDistanceRadius; i++) {
+				for (var j = -responsibleDistanceRadius; j <= responsibleDistanceRadius; j++) {
+					if (i * i + j * j > responsibleDistance) {
 						continue;
 					}
 					var v = new Vector(location.x + i, location.y + j);
 					if (!Util.outOfBounds(v)) {
 						if (Util.hasResource(v)) {
 							numResources++;
+							resourceDistance += i * i + j * j;
 						}
 					}
 				}
@@ -194,6 +197,11 @@ export class CastleBot {
 			if (numResources > bestNumResources) {
 				bestChurchLocation = location;
 				bestNumResources = numResources;
+				bestResourceDistance = resourceDistance;
+			} else if (numResources === bestNumResources && resourceDistance < bestResourceDistance) {
+				bestChurchLocation = location;
+				bestNumResources = numResources;
+				bestResourceDistance = resourceDistance;
 			}
 			return false; // Never stop until exhausted all unignored tiles
 		}, function(location) { // Ignore Condition
