@@ -15,7 +15,7 @@ export class ProphetBot {
 			this.controller.log("Unable to find castle signal? " + Vector.ofRobotPosition(this.controller.me) + " - " + this.controller.me.turn);
 		} else {
 			this.target = Util.decodePosition(castleSignal);
-			this.controller.log("Setting target: " + this.target);
+			this.controller.log("Prophet" + Vector.ofRobotPosition(this.controller.me) + " -> " + this.target);
 		}
 	}
 	getMoveForTarget() {

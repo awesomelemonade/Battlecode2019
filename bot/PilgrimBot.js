@@ -17,7 +17,7 @@ export class PilgrimBot {
 			this.searchingForTarget = false;
 			this.isBuildingChurch = (castleSignal & 1) === 1;
 			this.target = Util.decodePosition(castleSignal >>> 1);
-			this.controller.log("Setting target: " + this.target);
+			this.controller.log("Pilgrim" + Vector.ofRobotPosition(this.controller.me) + " -> " + this.target);
 		}
 	}
 	getMoveForReturn() {

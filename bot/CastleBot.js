@@ -35,7 +35,7 @@ export class CastleBot {
 		this.structurePositions = [];
 		this.enemyCastlePredictions = [];
 		this.xBuffers = {};
-		this.numChurchesBuilding = 0;
+		this.numChurchesBuilding = 0; // Total churches queued
 		this.buildingChurchCastleTalkQueue = [];
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
@@ -173,6 +173,9 @@ export class CastleBot {
 		var bigStop = bigDijkstras.resolve(function(location) {
 			return self.isValidChurchLocation(location);
 		});
+		if (bigStop === undefined) {
+			return undefined;
+		}
 		var bestChurchLocation = undefined;
 		var bestNumResources = 0;
 		var bestResourceDistance = 0;
@@ -348,6 +351,7 @@ export class CastleBot {
 		var robots = this.controller.getVisibleRobots();
 		// Retrieve castle positions
 		this.progresses = {}; // Empty out progresses - conveniently handles castles/churches that have died
+		var churchInfoTransmitting = false; // Do not build church if we're in the process of transmitting church information
 		for (var i = 0; i < robots.length; i++) {
 			// Only read our own castle talks excluding our own
 			if (robots[i].team === this.controller.me.team && robots[i].id !== this.controller.me.id) {
@@ -366,11 +370,12 @@ export class CastleBot {
 						if (buildChurch) {
 							if (this.xBuffers[robots[i].id] === undefined) {
 								this.xBuffers[robots[i].id] = value;
-								this.numChurchesBuilding++;
+								churchInfoTransmitting = true;
 							} else {
 								var churchPosition = new Vector(this.xBuffers[robots[i].id], value);
 								this.addChurchPosition(churchPosition);
 								this.xBuffers[robots[i].id] = undefined;
+								this.numChurchesBuilding++;
 							}
 						} else {
 							// Retrieve progresses
@@ -408,15 +413,21 @@ export class CastleBot {
 							// TODO: when to build pilgrim for church, save for church, or spawn lattice prophet
 							// If already spawned for church
 							// Save for church
-							if (this.controller.karbonite > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding + 50 &&
-									this.controller.fuel > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 100) {
-								// Try spawn for church - TODO: Which castle should spawn the church?
-								var churchLocation = this.findChurchLocation(Vector.ofRobotPosition(this.controller.me));
-								if (churchLocation === undefined) {
-									// No more places to build church - spawn lattice prophet
+							if (this.controller.karbonite > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding +
+											SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_KARBONITE + 50 &&
+									this.controller.fuel > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 
+											SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_FUEL + 100) {
+								if (churchInfoTransmitting) {
 									this.spawnLatticeProphet();
 								} else {
-									this.spawnPilgrimForChurch(churchLocation);
+									// Try spawn for church - TODO: Which castle should spawn the church?
+									var churchLocation = this.findChurchLocation(Vector.ofRobotPosition(this.controller.me));
+									if (churchLocation === undefined) {
+										// No more places to build church - spawn lattice prophet
+										this.spawnLatticeProphet();
+									} else {
+										this.spawnPilgrimForChurch(churchLocation);
+									}
 								}
 							}
 						}
