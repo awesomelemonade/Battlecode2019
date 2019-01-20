@@ -261,7 +261,8 @@ export class ChurchBot {
 		// removeDeadRobots(this.defenders);
 		// Figure out actions
 		if (this.controller.me.turn > 1) { // Skip first turn due to signalling of pilgrim that made the church
-			if (this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) {
+			var visibleEnemies = Util.getVisibleEnemies();
+			if ((this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) || visibleEnemies.length > 0) {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {
