@@ -9,15 +9,17 @@ const responsibleDistance = 5; // Must be less than church's vision radius to de
 // Use r.turn to differentiate castle vs other units?
 // castle_talk among castles for the first few turns - 8 bits
 const CASTLE_IDENTIFIER_BITSHIFT = 0; // Differentiate Castle and other units
-const CASTLE_UNUSED_BITSHIFT = 1; // Previously: Temporary leader identification system
+const CHURCH_IDENTIFIER_BITSHIFT = 1; // Differentiate Church and other units
 const CASTLE_LOCATION_BITSHIFT = 2;
 const CASTLE_LOCATION_BITMASK = 0b111111; // 6 bits (2^6 = 64) per x or y
 // castle_talk among castles after the first few turns
 
-const CASTLE_PROGRESS_BITSHIFT = 1;
-const CASTLE_PROGRESS_BITS = 7;
+const CASTLE_PROGRESS_BITSHIFT = 2;
+const CASTLE_PROGRESS_BITS = 6;
 const CASTLE_PROGRESS_BITMASK = Math.pow(2, CASTLE_PROGRESS_BITS) - 1;
 const CASTLE_PROGRESS_SCALE = Math.pow(2, CASTLE_PROGRESS_BITS);
+
+const CASTLE_BUILDCHURCH_BITSHIFT = 1;
 
 export class ChurchBot {
 	constructor(controller) {
@@ -217,17 +219,14 @@ export class ChurchBot {
 		// Update our own progress variable
 		this.progress = Math.min(this.pilgrimsAlive, this.resourceOrder.length);
 		var scaledProgress = Math.floor(this.progress / this.resourceOrder.length * CASTLE_PROGRESS_SCALE);
-		// Castle talk for castle locations
-		if (this.controller.me.turn > 2) {
-			// castle talk for castle positions
-			var signal = 0;
-			// Identify as Castle (But it's actually a church!)
-			signal |= (1 << CASTLE_IDENTIFIER_BITSHIFT);
-			// Broadcast progress
-			signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
-			// Send castle talk
-			this.controller.castleTalk(signal);
-		}
+		// Castle talk to castles
+		var signal = 0;
+		// Identify as Church
+		signal |= (1 << CHURCH_IDENTIFIER_BITSHIFT);
+		// Broadcast progress
+		signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
+		// Send castle talk
+		this.controller.castleTalk(signal);
 		return this.action;
 	}
 }

@@ -369,7 +369,6 @@ export class CastleBot {
 				}
 				var robotIsChurch = ((robots[i].castle_talk >>> CHURCH_IDENTIFIER_BITSHIFT) & 1) === 1;
 				if (robotIsChurch) {
-					// TODO: make ChurchBot use this system - only broadcast progress?
 					// Decrement numChurchesBuilding
 					if (robots[i].turn === 1) {
 						this.numChurchesBuilding--;
@@ -399,7 +398,7 @@ export class CastleBot {
 							// Save for church
 							if (this.controller.karbonite > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding + 50 &&
 									this.controller.fuel > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 100) {
-								// Try spawn for church
+								// Try spawn for church - TODO: Which castle should spawn the church?
 								var churchLocation = findChurchLocation(Vector.ofRobotPosition(this.controller.me));
 								if (churchLocation === undefined) {
 									// No more places to build church - spawn lattice prophet
