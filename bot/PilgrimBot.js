@@ -151,20 +151,27 @@ export class PilgrimBot {
 			}
 		} else {
 			// There's an enemy
-			var action = this.getKiteMove();
-			if (action === undefined) {
-				// For some reason, we cannot kite
-				if (this.isBuildingChurch) {
-					return this.getMoveForBuildChurch();
+			var action = undefined;
+			if (this.isBuildingChurch) {
+				action = this.getMoveForBuildChurch();
+			} else {
+				if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY ||
+						this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
+					// Ready for giving to church or castle
+					action = this.getMoveForReturn();
 				} else {
-					if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY ||
-							this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-						// Ready for giving to church or castle
-						return this.getMoveForReturn();
-					} else {
-						return this.getMoveForHarvest();
-					}
+					action = this.getMoveForHarvest();
 				}
+			}
+			var start = Vector.ofRobotPosition(this.controller.me);
+			var destination = null;
+			if (action === undefined || (!Util.isMoveAction(action))) {
+				destination = start;
+			} else {
+				destination = start.add(Util.getMoveVector(action));
+			}
+			if (this.enemyCanSee(destination)) {
+				return this.getKiteMove();
 			} else {
 				return action;
 			}

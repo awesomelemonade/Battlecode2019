@@ -296,3 +296,11 @@ export function getAttackMove() {
 		return controller.attack(bestDx, bestDy);
 	}
 }
+
+export function isMoveAction(action) {
+	return action.action === "move";
+}
+
+export function getMoveVector(action) {
+	return new Library.Vector(action.dx, action.dy);
+}
