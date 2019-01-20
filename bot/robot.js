@@ -21,6 +21,7 @@ class MyRobot extends BCAbstractRobot {
 		this.bots[SPECS.PROPHET] = ProphetBot;
 		this.bots[SPECS.PREACHER] = PreacherBot;
 		this.initialized = false;
+		this.timeBuffer = 10;
 	}
 	init() {
 		// Create controller
@@ -42,7 +43,21 @@ class MyRobot extends BCAbstractRobot {
 			this.init();
 		}
 		this.controller.turn(); // Preparation of controller
-		return this.bot.turn(); // Execute Turn
+		if (this.controller.me.time < this.timeBuffer) {
+			// We have no time!
+			this.controller.log("Skipped: " + this.controller.me.time + "ms/" + this.timeBuffer + "ms");
+			return undefined;
+		}
+		var beforeTime = new Date().getTime();
+		var action = this.bot.turn(); // Execute Turn
+		var time = ((new Date().getTime()) - beforeTime);
+		if (this.controller.me.time - time < this.timeBuffer) {
+			// We probably timed out
+			this.controller.log("Probably will time out: " + time + "ms/" + this.controller.me.time + "ms");
+		}
+		// Set time buffer
+		this.timeBuffer = 10 + time;
+		return action;
 	}
 }
 
