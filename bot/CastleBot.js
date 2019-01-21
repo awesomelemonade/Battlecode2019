@@ -4,9 +4,9 @@ import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 
 // Castles & Churches must not have overlapping responsible tiles
-const responsibleDistanceRadius = 2;
-const responsibleDistance = 5; // Must be less than church's vision radius to detect dead pilgrims & defenders
-const responsibleDistanceDoubled = Math.pow(2 * Math.sqrt(responsibleDistance), 2);
+const responsibleDistanceRadius = 3;
+const responsibleDistance = 15; // Must be less than church's vision radius to detect dead pilgrims & defenders
+const responsibleDistanceDoubled = Math.pow(1.5 * Math.sqrt(responsibleDistance), 2);
 
 // Use r.turn to differentiate castle vs other units?
 // castle_talk among castles for the first few turns - 8 bits
