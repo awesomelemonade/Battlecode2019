@@ -257,6 +257,23 @@ export class ChurchBot {
 			}
 		}
 	}
+	shouldDefend() {
+		var ourScore = 0;
+		var enemyScore = 0;
+		var robots = this.controller.getVisibleRobots();
+		for (var i = 0; i < robots.length; i++) {
+			var robot = robots[i];
+			if (!this.controller.isVisible(robot)){
+				continue;
+			}
+			if (robot.team === this.controller.me.team) {
+				ourScore += SPECS.UNITS[robot.unit].STARTING_HP;
+			} else {
+				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
+			}
+		}
+		return ourScore <= enemyScore * 2;
+	}
 	turn() {
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
@@ -265,8 +282,7 @@ export class ChurchBot {
 		// removeDeadRobots(this.defenders);
 		// Figure out actions
 		if (this.controller.me.turn > 1) { // Skip first turn due to signalling of pilgrim that made the church
-			var visibleEnemies = Util.getVisibleEnemies();
-			if ((this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) || visibleEnemies.length > 0) {
+			if ((this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) || this.shouldDefend()) {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {

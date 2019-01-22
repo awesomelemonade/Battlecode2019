@@ -356,6 +356,23 @@ export class CastleBot {
 				this.controller.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 
 						SPECS.UNITS[unitType].CONSTRUCTION_FUEL;
 	}
+	shouldDefend() {
+		var ourScore = 0;
+		var enemyScore = 0;
+		var robots = this.controller.getVisibleRobots();
+		for (var i = 0; i < robots.length; i++) {
+			var robot = robots[i];
+			if (!this.controller.isVisible(robot)){
+				continue;
+			}
+			if (robot.team === this.controller.me.team) {
+				ourScore += SPECS.UNITS[robot.unit].STARTING_HP;
+			} else {
+				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
+			}
+		}
+		return ourScore <= enemyScore * 2;
+	}
 	turn() {
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
@@ -419,8 +436,7 @@ export class CastleBot {
 			} else {
 				// TODO: Check progress of other castles/churches - see if we have enough funds to create units for this structure
 				// doChurchPilgrimAndDefenderBuilding;
-				var visibleEnemies = Util.getVisibleEnemies();
-				if (visibleEnemies.length > 0) {
+				if (this.shouldDefend()) {
 					// Castles can defend themselves
 					this.spawnLatticeProphet();
 				} else {
@@ -440,7 +456,9 @@ export class CastleBot {
 										this.spawnLatticeProphet();
 									}
 								} else {
-									this.spawnPilgrimForChurch(churchLocation);
+									if (churchLocation !== null) {
+										this.spawnPilgrimForChurch(churchLocation);
+									}
 								}
 							}
 						}
