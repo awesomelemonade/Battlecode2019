@@ -366,7 +366,9 @@ export class CastleBot {
 				continue;
 			}
 			if (robot.team === this.controller.me.team) {
-				ourScore += SPECS.UNITS[robot.unit].STARTING_HP;
+				if (robot.unit !== SPECS.PILGRIM && robot.unit !== SPECS.CHURCH && robot.unit !== SPECS.CASTLE){
+					ourScore += SPECS.UNITS[robot.unit].STARTING_HP;
+				}
 			} else {
 				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
 			}
