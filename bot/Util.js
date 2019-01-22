@@ -232,7 +232,7 @@ export function hasHigherAttackPriority(unitType, distanceSquared, bestUnitType,
 	// Assumes that both targets are attackable (within attack range)
 	// Assumes we are playing the long game - not rushing castle
 	var isCombatUnit = (unitType === SPECS.CRUSADER || unitType === SPECS.PROPHET || unitType === SPECS.PREACHER);
-	var bestIsCombatUnit = (bestUnitType === SPECS.CRUSADER || bestUnitType === SPECS.PROPHETS || bestUnitType === SPECS.PREACHER);
+	var bestIsCombatUnit = (bestUnitType === SPECS.CRUSADER || bestUnitType === SPECS.PROPHET || bestUnitType === SPECS.PREACHER);
 	// Prioritize combat units that can attack back
 	// then those that are combat units (crusaders, prophets, preachers) that can see us
 	// then those that are combat units (crusaders, prophets, preachers) that cannot see us
