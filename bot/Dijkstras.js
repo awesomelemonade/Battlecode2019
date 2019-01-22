@@ -33,11 +33,14 @@ export class Dijkstras {
 			for (var i = 0; i < this.moves.length; i++) {
 				var offset = this.moves[i];
 				var toExplore = popped.add(offset);
-				if (outOfBounds(toExplore) || (this.terrainMap[toExplore.x][toExplore.y] === false) || ignoreCondition(toExplore)) {
+				if (outOfBounds(toExplore) || (this.terrainMap[toExplore.x][toExplore.y] === false)) {
 					continue;
 				}
 				var moveCost = currentCost + this.moveCosts[i];
 				if (this.dist[toExplore.x][toExplore.y] == UNEXPLORED) {
+					if (ignoreCondition(toExplore)) {
+						continue;
+					}
 					this.dist[toExplore.x][toExplore.y] = moveCost;
 					this.prev[toExplore.x][toExplore.y] = popped;
 					this.queue.push(toExplore, moveCost);
