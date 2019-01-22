@@ -413,7 +413,8 @@ export class CastleBot {
 			} else {
 				// TODO: Check progress of other castles/churches - see if we have enough funds to create units for this structure
 				// doChurchPilgrimAndDefenderBuilding;
-				if (this.defendersAlive < this.pilgrimsAlive / 2) {
+				var visibleEnemies = Util.getVisibleEnemies();
+				if (visibleEnemies.length > 0) {
 					// Castles can defend themselves
 					this.spawnLatticeProphet();
 				} else {
@@ -530,31 +531,4 @@ function decodeCastleSpawnType(code) {
 	} else {
 		return -1;
 	}
-}
-
-export function castleTurn(r) {
-	controller = r;
-	action = undefined;
-	if (!initialized) {
-		initialize(r);
-	}
-	handleCastleTalk(r);
-	if (castlePositionsInitialized) {
-		if (unitsBuilt % 2 == 0 && unitsBuilt % 5 != 4) {
-			if (!spawnPilgrim(r)) {
-				spawnProphet(r);
-			}
-		} else {
-			spawnProphet(r);
-		}
-		if (action === undefined) {
-			if (controller.fuel > 10000) {
-				var randomEnemyCastle = enemyPredictions[Math.floor(Math.random() * enemyPredictions.length)]; // Select a random enemy castle
-				controller.signal(Util.encodePosition(randomEnemyCastle), 5000);
-			}
-		}
-	} else {
-		spawnPilgrim(r);
-	}
-	return action;
 }
