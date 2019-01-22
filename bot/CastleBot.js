@@ -350,6 +350,12 @@ export class CastleBot {
 		}
 		return numLower < Math.min(this.controller.karbonite / 10, this.controller.fuel / 50);
 	}
+	isAffordable(unitType) {
+		return this.controller.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding +
+						SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE &&
+				this.controller.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 
+						SPECS.UNITS[unitType].CONSTRUCTION_FUEL;
+	}
 	turn() {
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
@@ -423,23 +429,18 @@ export class CastleBot {
 							// TODO: when to build pilgrim for church, save for church, or spawn lattice prophet
 							// If already spawned for church
 							// Save for church
-							if (this.controller.karbonite > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding +
-											SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_KARBONITE + 50 &&
-									this.controller.fuel > SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 
-											SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_FUEL + 100) {
-								if (churchInfoTransmitting) {
+							if (churchInfoTransmitting) {
+								if (this.isAffordable(SPECS.PROPHET)) {
 									this.spawnLatticeProphet();
-								} else {
-									// Try spawn for church - TODO: Which castle should spawn the church?
-									var churchLocation = this.findChurchLocation();
-									if (churchLocation === undefined) {
-										// No more places to build church - spawn lattice prophet
+								}
+							} else {
+								var churchLocation = this.findChurchLocation();
+								if (churchLocation === undefined) {
+									if (this.isAffordable(SPECS.PROPHET)) {
 										this.spawnLatticeProphet();
-									} else {
-										if (churchLocation !== null) {
-											this.spawnPilgrimForChurch(churchLocation);
-										}
 									}
+								} else {
+									this.spawnPilgrimForChurch(churchLocation);
 								}
 							}
 						}
