@@ -1,6 +1,7 @@
 import {SPECS} from 'battlecode'
 import {Vector, totalMoves, totalMoveCosts, constantMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
+import {Bfs} from './Bfs'
 import * as Util from './Util';
 
 export class PilgrimBot {
@@ -63,8 +64,8 @@ export class PilgrimBot {
 	getMoveForBuildChurch() {
 		var self = this;
 		var start = Vector.ofRobotPosition(this.controller.me);
-		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, constantMoveCosts);
-		var stop = dijkstras.resolve(function(location) {
+		var bfs = new Bfs(this.controller.map, start, totalMoves);
+		var stop = bfs.resolve(function(location) {
 			return location.isAdjacentTo(self.target);
 		});
 		if (start.equals(stop)) { // Move is zero - we reached our target!
@@ -88,7 +89,7 @@ export class PilgrimBot {
 				return undefined;
 			}
 		} else {
-			var move = Util.getMove(dijkstras, start, stop);
+			var move = Util.getMove(bfs, start, stop);
 			return this.controller.move(move.x, move.y);
 		}
 	}

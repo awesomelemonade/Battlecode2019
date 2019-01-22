@@ -12,18 +12,18 @@ export class Bfs {
 		this.prev = Array(terrainMap.length).fill().map(() => Array(terrainMap[0].length).fill(null));
 		if (Array.isArray(start)) {
 			for (var i = 0; i < start.length; i++) {
-				this.queue.push(start[i], 0);
+				this.queue.push(start[i]);
 				this.dist[start[i].x][start[i].y] = 0;
 				this.prev[start[i].x][start[i].y] = start[i]
 			}
 		} else {
-			this.queue.push(start, 0);
+			this.queue.push(start);
 			this.dist[start.x][start.y] = 0;
 			this.prev[start.x][start.y] = start;
 		}
 	}
 	resolve(stopCondition = (vector) => false, ignoreCondition = (condition) => false) {
-		while (!this.queue.isEmpty()) {
+		while (this.queue.length !== 0) {
 			var popped = this.queue.shift();
 			if (stopCondition(popped)) {
 				return popped;
