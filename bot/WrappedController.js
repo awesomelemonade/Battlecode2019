@@ -23,6 +23,7 @@ export class WrappedController {
 		this.isVerticallySymmetric = Util.isVerticallySymmetric(this.map) && 
 				Util.isVerticallySymmetric(this.karbonite_map) && 
 				Util.isVerticallySymmetric(this.fuel_map);
+		SPECS.UNITS[SPECS.PREACHER].ATTACK_RADIUS = 26; // Preacher have 16 attack radius + splash radius
 	}
 	turn() {
 		for (var i = 0; i < this.turnProperties.length; i++) {
