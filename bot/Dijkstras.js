@@ -15,7 +15,7 @@ export class Dijkstras {
 			for (var i = 0; i < start.length; i++) {
 				this.queue.push(start[i], 0);
 				this.dist[start[i].x][start[i].y] = 0;
-				this.prev[start[i].x][start[i].y] = start[i]
+				this.prev[start[i].x][start[i].y] = start[i];
 			}
 		} else {
 			this.queue.push(start, 0);

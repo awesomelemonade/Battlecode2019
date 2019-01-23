@@ -1,4 +1,3 @@
-import {PriorityQueue} from './PriorityQueue'
 import {Vector} from './Library'
 import {outOfBounds} from './Util'
 
@@ -14,7 +13,7 @@ export class Bfs {
 			for (var i = 0; i < start.length; i++) {
 				this.queue.push(start[i]);
 				this.dist[start[i].x][start[i].y] = 0;
-				this.prev[start[i].x][start[i].y] = start[i]
+				this.prev[start[i].x][start[i].y] = start[i];
 			}
 		} else {
 			this.queue.push(start);

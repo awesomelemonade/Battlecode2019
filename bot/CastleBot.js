@@ -2,6 +2,7 @@ import {SPECS} from 'battlecode'
 import * as Util from './Util';
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
+import {Bfs} from './Bfs'
 
 // Castles & Churches must not have overlapping responsible tiles
 const responsibleDistanceRadius = 2;
@@ -60,8 +61,8 @@ export class CastleBot {
 	}
 	hasResourceOrder(position) {
 		var start = Util.getAdjacentPassable(position);
-		var dijkstras = new Dijkstras(this.controller.true_map, start, totalMoves, totalMoveCosts);
-		return dijkstras.resolve(function(location) { // Stop condition
+		var bfs = new Bfs(this.controller.true_map, start, totalMoves);
+		return bfs.resolve(function(location) { // Stop condition
 			// Stop condition is guaranteed to be evaluated only once per square
 			return Util.hasResource(location);
 		}, function(location) { // Ignore condition
@@ -177,15 +178,15 @@ export class CastleBot {
 	findChurchLocation() {
 		// Use true_map for resource finding
 		var self = this;
-		// Do big dijkstras
-		var bigDijkstras = new Dijkstras(this.controller.true_map, this.castlePositions, totalMoves, totalMoveCosts);
-		var bigStop = bigDijkstras.resolve(function(location) {
+		// Do big bfs
+		var bigBfs = new Bfs(this.controller.true_map, this.castlePositions, totalMoves);
+		var bigStop = bigBfs.resolve(function(location) {
 			return self.isValidChurchLocation(location);
 		});
 		if (bigStop === undefined) {
 			return undefined;
 		}
-		var traced = Util.trace(bigDijkstras, bigStop);
+		var traced = Util.trace(bigBfs, bigStop);
 		if (!traced.equals(Vector.ofRobotPosition(this.controller.me))) {
 			this.controller.log("Deferring creation of church pilgrim to castle at " + traced);
 			return null; // lol there has to be a better way
@@ -193,8 +194,8 @@ export class CastleBot {
 		var bestChurchLocation = undefined;
 		var bestNumResources = 0;
 		var bestResourceDistance = 0;
-		var smallDijkstras = new Dijkstras(this.controller.true_map, bigStop, totalMoves, totalMoveCosts);
-		smallDijkstras.resolve(function(location) { // Stop Condition
+		var smallBfs = new Bfs(this.controller.true_map, bigStop, totalMoves);
+		smallBfs.resolve(function(location) { // Stop Condition
 			// Count the number of resources within responsible distance
 			var numResources = 0;
 			var resourceDistance = 0;
@@ -226,6 +227,7 @@ export class CastleBot {
 		}, function(location) { // Ignore Condition
 			return !self.isValidChurchLocation(location);
 		});
+		beforeTime = Date.now();
 		return bestChurchLocation;
 	}
 	isValidChurchLocation(location) {
@@ -352,7 +354,6 @@ export class CastleBot {
 		return ourScore < enemyScore * 2;
 	}
 	turn() {
-		this.controller.log("Turn: " + this.controller.me.turn);
 		var self = this;
 		this.action = undefined;
 		// Retrieval id system
