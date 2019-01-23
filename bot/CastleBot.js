@@ -38,6 +38,7 @@ export class CastleBot {
 		this.xBuffers = {};
 		this.numChurchesBuilding = 0; // Total churches queued
 		this.buildingChurchCastleTalkQueue = [];
+		this.churchesBuilt = false;
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
 		this.progress = 0;
@@ -227,7 +228,6 @@ export class CastleBot {
 		}, function(location) { // Ignore Condition
 			return !self.isValidChurchLocation(location);
 		});
-		beforeTime = Date.now();
 		return bestChurchLocation;
 	}
 	isValidChurchLocation(location) {
@@ -443,11 +443,13 @@ export class CastleBot {
 									this.spawnLatticeProphet();
 								}
 							} else {
-								var churchLocation = this.findChurchLocation();
+								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
+									// No more church locations
 									if (this.isAffordable(SPECS.PROPHET)) {
 										this.spawnLatticeProphet();
 									}
+									this.churchesBuilt = true;
 								} else {
 									if (churchLocation !== null) {
 										// Subtract 1 because one can gain karbonite while getting to church location
