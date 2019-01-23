@@ -154,7 +154,7 @@ export function getInitialCastleOrChurch() {
 
 export function getInitialCastleOrChurchSignal() {
 	var robot = getInitialCastleOrChurch();
-	
+	return (robot === null ? -1 : robot.signal);
 }
 
 export function getInitialChurchSignal() {

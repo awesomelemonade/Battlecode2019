@@ -152,10 +152,7 @@ export class ChurchBot {
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target
 		this.controller.signal((Util.encodePosition(resourcePosition) << 1), offset.x * offset.x + offset.y * offset.y);
-		// Temporary set pilgrims array to arbitrary id
-		this.pilgrims[index] = 1234;
 		// Set retrieval of id for next turn
-		// Problem: The built robot gets to move before castle can retrieve id
 		this.retrieveIndex = index;
 		this.retrieveArray = this.pilgrims;
 		this.retrieveUnit = SPECS.PILGRIM;
@@ -212,8 +209,9 @@ export class ChurchBot {
 		}
 	}
 	removeDeadRobots(robots) {
-		for (var i = 0; i < this.robots.length; i++) {
-			var robotId = this.robots[i];
+		var counter = 0;
+		for (var i = 0; i < robots.length; i++) {
+			var robotId = robots[i];
 			if (robotId === -1) {
 				continue;
 			}
@@ -221,8 +219,10 @@ export class ChurchBot {
 			if (robot === null || (!this.controller.isVisible(robot))) {
 				// Robot is dead
 				this.robots[i] = -1;
+				counter++;
 			}
 		}
+		return counter;
 	}
 	shouldDefend() {
 		var ourScore = 0;
@@ -244,22 +244,24 @@ export class ChurchBot {
 		return ourScore < enemyScore * 2;
 	}
 	turn() {
+		var self = this;
 		this.action = undefined;
-		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
 		// Retrieval id system
 		if (this.retrieveIndex !== -1) {
-			// Search for unit on our team and has robot.turn === 1
-			var robots = this.controller.getVisibleRobots();
-			for (var i = 0; i < robots.length; i++) {
-				var robot = robots[i];
-				if (robot.team === this.controller.me.team && robot.turn === 1) {
-					this.controller.log()
-					break;
-				}
+			// Find unit
+			var robot = Util.findRobot(function(robot) {
+				return robot.team === self.controller.me.team && robot.turn === 1 && robot.unit === self.retrieveUnit;
+			});
+			if (robot === null) {
+				this.controller.log("Unable to retrieve id of robot?");
+			} else {
+				this.retrieveArray[this.retrieveIndex] = robot.id;
+				this.retrieveIndex = -1;
 			}
 		}
-		removeDeadRobots(this.pilgrims);
-		removeDeadRobots(this.defenders);
+		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
+		this.pilgrimsAlive -= this.removeDeadRobots(this.pilgrims);
+		// this.defendersAlive -= this.removeDeadRobots(this.defenders);
 		// Figure out actions
 		if (this.controller.me.turn > 1) { // Skip first turn due to signalling of pilgrim that made the church
 			if ((this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) || this.shouldDefend()) {

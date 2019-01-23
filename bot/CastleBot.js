@@ -41,7 +41,9 @@ export class CastleBot {
 		this.resourceOrder = [];
 		this.progress = 0;
 		this.progresses = {};
-		this.retrieveId = false; // Used to keep track of pilgrim/defender ids
+		this.retrieveIndex = -1; // Used to keep track of pilgrim/defender ids
+		this.retrieveArray = undefined;
+		this.retrieveUnit = undefined;
 		// This following system limits 1 pilgrim and 1 defender per resource
 		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
 		this.defenders = []; // Stores id or -1, indices correspond with resourceOrder
@@ -128,14 +130,10 @@ export class CastleBot {
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target
 		this.controller.signal((Util.encodePosition(resourcePosition) << 1), offset.x * offset.x + offset.y * offset.y);
-		// Temporary set pilgrims array to arbitrary id
-		this.pilgrims[index] = 1234;
 		// Set retrieval of id for next turn
-		// Problem: The built robot gets to move before castle can retrieve id
-		/*this.retrieveId = true;
-		this.retrieveArray = this.pilgrims;
 		this.retrieveIndex = index;
-		this.retrieveOffset = offset;*/
+		this.retrieveArray = this.pilgrims;
+		this.retrieveUnit = SPECS.PILGRIM;
 		this.pilgrimsAlive++;
 		return true;
 	}
@@ -252,35 +250,6 @@ export class CastleBot {
 		// Check if there resources around the responsibleDistance
 		return this.hasResourceOrder(location);
 	}
-	spawnDefender() {
-		// Check costs of prophet
-		if (!Util.isAffordable(SPECS.PROPHET)) {
-			return false;
-		}
-		// Find the first index where its value is -1 in this.pilgrims
-		var index = Util.findIndex(this.defenders, -1);
-		if (index === -1) { // Exhausted all resources this church is assigned to
-			return false;
-		}
-		var resourcePosition = this.resourceOrder[index];
-		// Calculate which adjacent tile to build the prophet using Dijkstras
-		var castlePosition = Vector.ofRobotPosition(this.controller.me);
-		var start = Util.getAdjacentPassable(castlePosition);
-		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(resourcePosition) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
-		if (stop === undefined) {
-			// Dijkstras did not find a valid prophet location
-			return false;
-		}
-		var traced = Util.trace(dijkstras, stop);
-		var offset = traced.subtract(castlePosition);
-		// Build the unit
-		this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
-		// Signal to prophet
-		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y);
-		this.defendersAlive++;
-		return true;
-	}
 	spawnLatticeProphet() {
 		// Check costs of prophet
 		if (!Util.isAffordable(SPECS.PROPHET)) {
@@ -322,8 +291,9 @@ export class CastleBot {
 		}
 	}
 	removeDeadRobots(robots) {
-		for (var i = 0; i < this.robots.length; i++) {
-			var robotId = this.robots[i];
+		var counter = 0;
+		for (var i = 0; i < robots.length; i++) {
+			var robotId = robots[i];
 			if (robotId === -1) {
 				continue;
 			}
@@ -331,8 +301,10 @@ export class CastleBot {
 			if (robot === null || (!this.controller.isVisible(robot))) {
 				// Robot is dead
 				this.robots[i] = -1;
+				counter++;
 			}
 		}
+		return counter;
 	}
 	castleAttack() {
 		var ret = Util.getAttackMove();
@@ -381,11 +353,24 @@ export class CastleBot {
 	}
 	turn() {
 		this.controller.log("Turn: " + this.controller.me.turn);
+		var self = this;
 		this.action = undefined;
+		// Retrieval id system
+		if (this.retrieveIndex !== -1) {
+			// Find unit
+			var robot = Util.findRobot(function(robot) {
+				return robot.team === self.controller.me.team && robot.turn === 1 && robot.unit === self.retrieveUnit;
+			});
+			if (robot === null) {
+				this.controller.log("Unable to retrieve id of robot?");
+			} else {
+				this.retrieveArray[this.retrieveIndex] = robot.id;
+				this.retrieveIndex = -1;
+			}
+		}
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
-		// TODO - need to have retrieval id system or an alternative
-		// removeDeadRobots(this.pilgrims);
-		// removeDeadRobots(this.defenders);
+		this.pilgrimsAlive -= this.removeDeadRobots(this.pilgrims);
+		// this.defendersAlive -= this.removeDeadRobots(this.defenders);
 		var robots = this.controller.getVisibleRobots();
 		// Retrieve castle positions
 		this.progresses = {}; // Empty out progresses - conveniently handles castles/churches that have died
