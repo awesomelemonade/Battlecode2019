@@ -124,69 +124,52 @@ export function getAdjacentPassable(position) {
 	return ret;
 }
 
-export function getInitialCastleOrChurch() {
-	// Retrieve signal from castle and set target
+export function findRobot(condition, checkVisible = true) {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
 		var robot = robots[i];
-		if (!controller.isVisible(robot)) {
-			// Ignore robots that are not visible - signalling
+		if (checkVisible && (!controller.isVisible(robot))) {
 			continue;
 		}
-		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
-				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) ) {
-			var distX = robot.x - controller.me.x;
-			var distY = robot.y - controller.me.y;
-			var distSquared = distX * distX + distY * distY;
-			if (distSquared <= 2 && distSquared === robot.signal_radius) {
-				return robot;
-			}
+		if (condition(robot)) {
+			return robot;
 		}
 	}
 	return null;
 }
 
-export function getInitialCastleOrChurchSignal() {
-	// Retrieve signal from castle and set target
-	var robots = controller.getVisibleRobots();
-	for (var i = 0; i < robots.length; i++) {
-		var robot = robots[i];
-		if (!controller.isVisible(robot)) {
-			// Ignore robots that are not visible - signalling
-			continue;
-		}
+export function getInitialCastleOrChurch() {
+	return findRobot(function(robot) {
 		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
-				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH) ) {
-			var distX = robot.x - controller.me.x;
-			var distY = robot.y - controller.me.y;
-			var distSquared = distX * distX + distY * distY;
+				(robot.unit === SPECS.CASTLE || robot.unit === SPECS.CHURCH)) {
+			var dx = robot.x - controller.me.x;
+			var dy = robot.y - controller.me.y;
+			var distSquared = dx * dx + dy * dy;
 			if (distSquared <= 2 && distSquared === robot.signal_radius) {
-				return robot.signal;
+				return true;
 			}
 		}
-	}
-	return -1;
+	});
+}
+
+export function getInitialCastleOrChurchSignal() {
+	var robot = getInitialCastleOrChurch();
+	
 }
 
 export function getInitialChurchSignal() {
-	// Retrieve signal from castle and set target
-	var robots = controller.getVisibleRobots();
-	for (var i = 0; i < robots.length; i++) {
-		var robot = robots[i];
-		if (!controller.isVisible(robot)) {
-			// Ignore robots that are not visible - signalling
-			continue;
-		}
-		if (robot.team === controller.me.team && robot.unit === SPECS.CHURCH && controller.isRadioing(robot)) {
-			var distX = robot.x - controller.me.x;
-			var distY = robot.y - controller.me.y;
-			var distSquared = distX * distX + distY * distY;
+	var robot = findRobot(function(robot) {
+		if (robot.team === controller.me.team && controller.isRadioing(robot) && 
+				(robot.unit === SPECS.CHURCH)) {
+			var dx = robot.x - controller.me.x;
+			var dy = robot.y - controller.me.y;
+			var distSquared = dx * dx + dy * dy;
 			if (distSquared <= 2 && distSquared === robot.signal_radius) {
-				return robot.signal;
+				return true;
 			}
 		}
-	}
-	return -1;
+	});
+	return (robot === null ? -1 : robot.signal);
 }
 
 export function getVisibleEnemies() {

@@ -32,7 +32,9 @@ export class ChurchBot {
 		this.resourceOrder = [];
 		this.progress = 0;
 		this.progresses = {};
-		this.retrieveId = false; // Used to keep track of pilgrim/defender ids
+		this.retrieveIndex = -1; // Used to keep track of pilgrim/defender ids
+		this.retrieveArray = undefined;
+		this.retrieveUnit = undefined;
 		// This following system limits 1 pilgrim and 1 defender per resource
 		this.pilgrims = []; // Stores id or -1, indices correspond with resourceOrder
 		this.defenders = []; // Stores id or -1, indices correspond with resourceOrder
@@ -64,14 +66,9 @@ export class ChurchBot {
 					var resourcePosition = this.resourceOrder[index];
 					// Signal to pilgrim the target
 					this.controller.signal(Util.encodePosition(resourcePosition), distSquared);
-					// Temporary set pilgrims array to arbitrary id
-					this.pilgrims[index] = 1234;
-					// Set retrieval of id for next turn
-					// Problem: The built robot gets to move before castle can retrieve id
-					/*this.retrieveId = true;
-					this.retrieveArray = this.pilgrims;
-					this.retrieveIndex = index;
-					this.retrieveOffset = offset;*/
+					// Store id in this.pilgrims
+					this.pilgrims[index] = robot.id;
+					// Increment pilgrimsAlive
 					this.pilgrimsAlive++;
 					break;
 				}
@@ -159,40 +156,10 @@ export class ChurchBot {
 		this.pilgrims[index] = 1234;
 		// Set retrieval of id for next turn
 		// Problem: The built robot gets to move before castle can retrieve id
-		/*this.retrieveId = true;
-		this.retrieveArray = this.pilgrims;
 		this.retrieveIndex = index;
-		this.retrieveOffset = offset;*/
+		this.retrieveArray = this.pilgrims;
+		this.retrieveUnit = SPECS.PILGRIM;
 		this.pilgrimsAlive++;
-		return true;
-	}
-	spawnDefender() {
-		// Check costs of prophet
-		if (!Util.isAffordable(SPECS.PROPHET)) {
-			return false;
-		}
-		// Find the first index where its value is -1 in this.pilgrims
-		var index = Util.findIndex(this.defenders, -1);
-		if (index === -1) { // Exhausted all resources this church is assigned to
-			return false;
-		}
-		var resourcePosition = this.resourceOrder[index];
-		// Calculate which adjacent tile to build the prophet using Dijkstras
-		var castlePosition = Vector.ofRobotPosition(this.controller.me);
-		var start = Util.getAdjacentPassable(castlePosition);
-		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((vector) => (vector.getDistanceSquared(resourcePosition) < 9 && (!Util.hasResource(vector)) && (!Util.isNextToCastleOrChurch(vector))));
-		if (stop === undefined) {
-			// Dijkstras did not find a valid prophet location
-			return false;
-		}
-		var traced = Util.trace(dijkstras, stop);
-		var offset = traced.subtract(castlePosition);
-		// Build the unit
-		this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
-		// Signal to prophet
-		this.controller.signal(Util.encodePosition(resourcePosition), offset.x * offset.x + offset.y * offset.y);
-		this.defendersAlive++;
 		return true;
 	}
 	randomPassableVector() {
@@ -279,9 +246,20 @@ export class ChurchBot {
 	turn() {
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
-		// TODO - need to have retrieval id system or an alternative
-		// removeDeadRobots(this.pilgrims);
-		// removeDeadRobots(this.defenders);
+		// Retrieval id system
+		if (this.retrieveIndex !== -1) {
+			// Search for unit on our team and has robot.turn === 1
+			var robots = this.controller.getVisibleRobots();
+			for (var i = 0; i < robots.length; i++) {
+				var robot = robots[i];
+				if (robot.team === this.controller.me.team && robot.turn === 1) {
+					this.controller.log()
+					break;
+				}
+			}
+		}
+		removeDeadRobots(this.pilgrims);
+		removeDeadRobots(this.defenders);
 		// Figure out actions
 		if (this.controller.me.turn > 1) { // Skip first turn due to signalling of pilgrim that made the church
 			if ((this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 30) / 100) && this.pilgrimsAlive >= this.resourceOrder.length) || this.shouldDefend()) {
