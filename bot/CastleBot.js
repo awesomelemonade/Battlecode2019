@@ -56,6 +56,16 @@ export class CastleBot {
 			this.defenders.push(-1);
 		}
 	}
+	hasResourceOrder(position) {
+		var start = Util.getAdjacentPassable(position);
+		var dijkstras = new Dijkstras(this.controller.true_map, start, totalMoves, totalMoveCosts);
+		return dijkstras.resolve(function(location) { // Stop condition
+			// Stop condition is guaranteed to be evaluated only once per square
+			return Util.hasResource(location);
+		}, function(location) { // Ignore condition
+			return position.getDistanceSquared(location) > responsibleDistance;
+		}) !== undefined;
+	}
 	getResourceOrder(position) {
 		var start = Util.getAdjacentPassable(position);
 		var dijkstras = new Dijkstras(this.controller.true_map, start, totalMoves, totalMoveCosts);
@@ -232,21 +242,15 @@ export class CastleBot {
 				return false;
 			}
 		}
-		// Check if there resources around the responsibleDistance
-		for (var i = -responsibleDistanceRadius; i <= responsibleDistanceRadius; i++) {
-			for (var j = -responsibleDistanceRadius; j <= responsibleDistanceRadius; j++) {
-				if (i * i + j * j > responsibleDistance) {
-					continue;
-				}
-				var v = new Vector(location.x + i, location.y + j);
-				if (!Util.outOfBounds(v)) {
-					if (Util.hasResource(v)) {
-						return true; // Found resource
-					}
-				}
+		// Ensure not near enemy castle predictions
+		for (var i = 0; i < this.enemyCastlePredictions.length; i++) {
+			var position = this.enemyCastlePredictions[i];
+			if (location.getDistanceSquared(position) <= responsibleDistanceDoubled) {
+				return false;
 			}
 		}
-		return false; // Found no resources
+		// Check if there resources around the responsibleDistance
+		return this.hasResourceOrder(location);
 	}
 	spawnDefender() {
 		// Check costs of prophet
@@ -373,9 +377,10 @@ export class CastleBot {
 				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
 			}
 		}
-		return ourScore <= enemyScore * 2;
+		return ourScore < enemyScore * 2;
 	}
 	turn() {
+		this.controller.log("Turn: " + this.controller.me.turn);
 		this.action = undefined;
 		// Figure out which pilgrims and defenders died and remove from this.pilgrims and this.defenders
 		// TODO - need to have retrieval id system or an alternative
@@ -459,7 +464,13 @@ export class CastleBot {
 									}
 								} else {
 									if (churchLocation !== null) {
-										this.spawnPilgrimForChurch(churchLocation);
+										// Subtract 1 because one can gain karbonite while getting to church location
+										if(this.controller.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * (this.numChurchesBuilding - 1) +
+														SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_KARBONITE &&
+												this.controller.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * (this.numChurchesBuilding - 1) + 
+														SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_FUEL) {
+											this.spawnPilgrimForChurch(churchLocation);
+										}
 									}
 								}
 							}

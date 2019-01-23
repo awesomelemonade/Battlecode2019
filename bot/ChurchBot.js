@@ -274,7 +274,7 @@ export class ChurchBot {
 				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
 			}
 		}
-		return ourScore <= enemyScore * 2;
+		return ourScore < enemyScore * 2;
 	}
 	turn() {
 		this.action = undefined;
