@@ -45,7 +45,9 @@ class MyRobot extends BCAbstractRobot {
 		this.controller.turn(); // Preparation of controller
 		if (this.controller.me.time < this.timeBuffer) {
 			// We have no time!
-			this.controller.log("Skipped [" + this.controller.me.x + ", " + this.controller.me.y + "]" + ": " + this.controller.me.time + "ms/" + this.timeBuffer + "ms");
+			this.controller.log("Skipped " + this.getUnitTypeName(this.controller.me.unit) + 
+					"[" + this.controller.me.x + ", " + this.controller.me.y + "]" + ": " + 
+					this.controller.me.time + "ms/" + this.timeBuffer + "ms");
 			return undefined;
 		}
 		var beforeTime = new Date().getTime();
@@ -58,6 +60,23 @@ class MyRobot extends BCAbstractRobot {
 		// Set time buffer
 		this.timeBuffer = 10 + time;
 		return action;
+	}
+	getUnitTypeName(unitType) {
+		switch (unitType) {
+			case SPECS.CASTLE:
+				return "CASTLE";
+			case SPECS.CHURCH:
+				return "CHURCH";
+			case SPECS.PILGRIM:
+				return "PILGRIM";
+			case SPECS.CRUSADER:
+				return "CRUSADER";
+			case SPECS.PROPHET:
+				return "PROPHET";
+			case SPECS.PREACHER:
+				return "PREACHER";
+		}
+		return "UNKNOWN";
 	}
 }
 
