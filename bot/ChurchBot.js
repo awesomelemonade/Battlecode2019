@@ -91,7 +91,7 @@ export class ChurchBot {
 		return bestIndex;
 	}
 	getResourceOrder(position) {
-		var start = Util.getAdjacentPassable(position);
+		var start = Util.getAdjacentPassableTrueMap(position);
 		var dijkstras = new Dijkstras(this.controller.true_map, start, totalMoves, totalMoveCosts);
 		var karboniteOrder = [];
 		var fuelOrder = [];
@@ -285,6 +285,7 @@ export class ChurchBot {
 		signal |= ((scaledProgress & CASTLE_PROGRESS_BITMASK) << CASTLE_PROGRESS_BITSHIFT);
 		// Send castle talk
 		this.controller.castleTalk(signal);
+		
 		return this.action;
 	}
 }

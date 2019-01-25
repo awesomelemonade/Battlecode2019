@@ -3,6 +3,7 @@ import * as Util from './Util';
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 import {Bfs} from './Bfs'
+import * as ChurchLocationFinder from './ChurchLocationFinder'
 
 // Castles & Churches must not have overlapping responsible tiles
 const responsibleDistanceRadius = 2;
@@ -39,6 +40,7 @@ export class CastleBot {
 		this.numChurchesBuilding = 0; // Total churches queued
 		this.buildingChurchCastleTalkQueue = [];
 		this.churchesBuilt = false;
+		this.churchInit = false;
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
 		this.progress = 0;
@@ -60,18 +62,8 @@ export class CastleBot {
 			this.defenders.push(-1);
 		}
 	}
-	hasResourceOrder(position) {
-		var start = Util.getAdjacentPassable(position);
-		var bfs = new Bfs(this.controller.true_map, start, totalMoves);
-		return bfs.resolve(function(location) { // Stop condition
-			// Stop condition is guaranteed to be evaluated only once per square
-			return Util.hasResource(location);
-		}, function(location) { // Ignore condition
-			return position.getDistanceSquared(location) > responsibleDistance;
-		}) !== undefined;
-	}
 	getResourceOrder(position) {
-		var start = Util.getAdjacentPassable(position);
+		var start = Util.getAdjacentPassableTrueMap(position);
 		var dijkstras = new Dijkstras(this.controller.true_map, start, totalMoves, totalMoveCosts);
 		var karboniteOrder = [];
 		var fuelOrder = [];
@@ -175,82 +167,12 @@ export class CastleBot {
 		// Return success
 		return true;
 	}
-	// TODO: temporary null vs undefined returning
 	findChurchLocation() {
-		// Use true_map for resource finding
-		var self = this;
-		// Do big bfs
-		var bigBfs = new Bfs(this.controller.true_map, this.castlePositions, totalMoves);
-		var bigStop = bigBfs.resolve(function(location) {
-			return self.isValidChurchLocation(location);
-		});
-		if (bigStop === undefined) {
-			return undefined;
+		if (!this.churchInit) {
+			ChurchLocationFinder.resolve(this.controller, this.castlePositions, this.enemyCastlePredictions, this.structurePositions);
+			this.churchInit = true;
 		}
-		var traced = Util.trace(bigBfs, bigStop);
-		if (!traced.equals(Vector.ofRobotPosition(this.controller.me))) {
-			this.controller.log("Deferring creation of church pilgrim to castle at " + traced);
-			return null; // lol there has to be a better way
-		}
-		var bestChurchLocation = undefined;
-		var bestNumResources = 0;
-		var bestResourceDistance = 0;
-		var smallBfs = new Bfs(this.controller.true_map, bigStop, totalMoves);
-		smallBfs.resolve(function(location) { // Stop Condition
-			// Count the number of resources within responsible distance
-			var numResources = 0;
-			var resourceDistance = 0;
-			for (var i = -responsibleDistanceRadius; i <= responsibleDistanceRadius; i++) {
-				for (var j = -responsibleDistanceRadius; j <= responsibleDistanceRadius; j++) {
-					if (i * i + j * j > responsibleDistance) {
-						continue;
-					}
-					var v = new Vector(location.x + i, location.y + j);
-					if (!Util.outOfBounds(v)) {
-						if (Util.hasResource(v)) {
-							numResources++;
-							resourceDistance += i * i + j * j;
-						}
-					}
-				}
-			}
-			// Compare with bestChurchLocation
-			if (numResources > bestNumResources) {
-				bestChurchLocation = location;
-				bestNumResources = numResources;
-				bestResourceDistance = resourceDistance;
-			} else if (numResources === bestNumResources && resourceDistance < bestResourceDistance) {
-				bestChurchLocation = location;
-				bestNumResources = numResources;
-				bestResourceDistance = resourceDistance;
-			}
-			return false; // Never stop until exhausted all unignored tiles
-		}, function(location) { // Ignore Condition
-			return !self.isValidChurchLocation(location);
-		});
-		return bestChurchLocation;
-	}
-	isValidChurchLocation(location) {
-		// Ensure not on top of resource
-		if (Util.hasResource(location)) {
-			return false;
-		}
-		// Ensure not too close to other structures
-		for (var i = 0; i < this.structurePositions.length; i++) {
-			var position = this.structurePositions[i];
-			if (location.getDistanceSquared(position) <= responsibleDistanceDoubled) {
-				return false;
-			}
-		}
-		// Ensure not near enemy castle predictions
-		for (var i = 0; i < this.enemyCastlePredictions.length; i++) {
-			var position = this.enemyCastlePredictions[i];
-			if (location.getDistanceSquared(position) <= responsibleDistanceDoubled) {
-				return false;
-			}
-		}
-		// Check if there resources around the responsibleDistance
-		return this.hasResourceOrder(location);
+		return ChurchLocationFinder.findChurchLocation();
 	}
 	spawnLatticeProphet() {
 		// Check costs of prophet

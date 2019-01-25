@@ -124,6 +124,17 @@ export function getAdjacentPassable(position) {
 	return ret;
 }
 
+export function getAdjacentPassableTrueMap(position) {
+	var ret = [];
+	for (var i = 0; i < adjacent.length; i++) {
+		var v = new Library.Vector(position.x + adjacent[i][0], position.y + adjacent[i][1]);
+		if ((!outOfBounds(v)) && controller.true_map[v.x][v.y] === true) { // Check if passable
+			ret.push(v);
+		}
+	}
+	return ret;
+}
+
 export function findRobot(condition, checkVisible = true) {
 	var robots = controller.getVisibleRobots();
 	for (var i = 0; i < robots.length; i++) {
