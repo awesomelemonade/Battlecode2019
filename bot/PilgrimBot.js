@@ -75,15 +75,18 @@ export class PilgrimBot {
 			}
 			// Check if this.target is actually empty and church is affordable
 			if (this.controller.robot_map[this.target.x][this.target.y] === 0) {
-				this.controller.log("Building church at: " + this.target);
 				// Build the church
 				var offset = this.target.subtract(start);
 				var action = this.controller.buildUnit(SPECS.CHURCH, offset.x, offset.y);
-				// Set isBuildingChurch to false
-				this.isBuildingChurch = false;
-				// Queue a get harvest target from church
-				this.searchingForTarget = true;
-				return action;
+				var self = this;
+				return function () {
+					self.controller.log("Building church at: " + self.target);
+					// Set isBuildingChurch to false
+					self.isBuildingChurch = false;
+					// Queue a get harvest target from church
+					self.searchingForTarget = true;
+					return action;
+				};
 			} else {
 				// Target is occupied!
 				return undefined;
@@ -131,6 +134,7 @@ export class PilgrimBot {
 		}
 	}
 	turn() {
+		var action = undefined;
 		if (this.searchingForTarget) {
 			// Retrieve signal from castle and set target
 			var castleSignal = Util.getInitialChurchSignal();
@@ -142,34 +146,21 @@ export class PilgrimBot {
 			}
 			this.searchingForTarget = false;
 		}
-		var visibleEnemies = Util.getVisibleEnemies();
-		if (visibleEnemies.length === 0) {
-			// We don't see enemy
-			if (this.isBuildingChurch) {
-				return this.getMoveForBuildChurch();
-			} else {
-				if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY ||
-						this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					// Ready for giving to church or castle
-					return this.getMoveForReturn();
-				} else {
-					return this.getMoveForHarvest();
-				}
-			}
+		// Assume We don't see enemy
+		if (this.isBuildingChurch) {
+			action = this.getMoveForBuildChurch(); // lol ugly code
 		} else {
-			// There's an enemy
-			var action = undefined;
-			if (this.isBuildingChurch) {
-				action = this.getMoveForBuildChurch();
+			if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY ||
+					this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
+				// Ready for giving to church or castle
+				action = this.getMoveForReturn();
 			} else {
-				if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY ||
-						this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					// Ready for giving to church or castle
-					action = this.getMoveForReturn();
-				} else {
-					action = this.getMoveForHarvest();
-				}
+				action = this.getMoveForHarvest();
 			}
+		}
+		var visibleEnemies = Util.getVisibleEnemies();
+		if (visibleEnemies.length >= 0) {
+			// There's an enemy
 			var start = Vector.ofRobotPosition(this.controller.me);
 			var destination = null;
 			if (action === undefined || (!Util.isMoveAction(action))) {
@@ -178,10 +169,14 @@ export class PilgrimBot {
 				destination = start.add(Util.getMoveVector(action));
 			}
 			if (this.enemyCanSee(visibleEnemies, destination)) {
-				return this.getKiteMove();
-			} else {
-				return action;
+				// We should kite
+				action = this.getKiteMove();
 			}
+		}
+		if (action instanceof Function) {
+			return action();
+		} else {
+			return action;
 		}
 	}
 }
