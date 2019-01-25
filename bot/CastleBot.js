@@ -137,6 +137,7 @@ export class CastleBot {
 			return false;
 		}
 		if (this.controller.map[churchLocation.x][churchLocation.y] === false) {
+			// We need this condition to ensure dijkstras does not look the whole map
 			// churchLocation is not passable/occupiable
 			return false;
 		}
@@ -427,6 +428,7 @@ export class CastleBot {
 	}
 	addChurchPosition(churchPosition) {
 		this.structurePositions.push(churchPosition);
+		ChurchLocationFinder.updateStructurePosition(churchPosition);
 	}
 	addCastlePosition(castlePosition) {
 		this.castlePositions.push(castlePosition);

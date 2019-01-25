@@ -4,6 +4,7 @@ import {Vector, totalMoves, totalMoveCosts} from './Library'
 
 var UNEXPLORED = -1;
 
+const responsibleDistanceRadius = 2;
 const responsibleDistance = 5; // Must be less than church's vision radius to detect dead pilgrims & defenders
 const responsibleDistanceDoubled = Math.pow(2 * Math.sqrt(responsibleDistance), 2);
 
@@ -17,7 +18,7 @@ var numResources;
 var resourceDistance;
 var resolved;
 
-// TODO: handle updating structurePositions
+var initialized = false;
 
 export function resolve(c, localCastlePositions, localEnemyCastlePredictions, localStructurePositions) {
 	controller = c;
@@ -29,6 +30,7 @@ export function resolve(c, localCastlePositions, localEnemyCastlePredictions, lo
 	validChurchLocation = new Array(map.length).fill().map(() => Array(map[0].length).fill(false));
 	numResources = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
 	resourceDistance = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
+	initialized = true;
 }
 
 function resolveLocation(location) {
@@ -42,6 +44,24 @@ function resolveLocation(location) {
 		resourceDistance[location.x][location.y] = info.resourceDistance;
 	}
 	resolved[location.x][location.y] = true;
+}
+
+export function updateStructurePosition(structurePosition) {
+	if (!initialized) {
+		return;
+	}
+	for (var i = -responsibleDistanceRadius * 2; i <= responsibleDistanceRadius * 2; i++) {
+		for (var j = -responsibleDistanceRadius * 2; j <= responsibleDistanceRadius * 2; j++) {
+			if (i * i + j * j > responsibleDistanceDoubled) {
+				continue;
+			}
+			var location = structurePosition.add(new Vector(i, j));
+			if (!Util.outOfBounds(location)) {
+				resolved[location.x][location.y] = true;
+				validChurchLocation[location.x][location.y] = false;
+			}
+		}
+	}
 }
 
 export function findChurchLocation() {
