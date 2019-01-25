@@ -225,7 +225,7 @@ export class CastleBot {
 			var robot = this.controller.getRobot(robotId);
 			if (robot === null || (!this.controller.isVisible(robot))) {
 				// Robot is dead
-				this.robots[i] = -1;
+				robots[i] = -1;
 				counter++;
 			}
 		}
