@@ -80,7 +80,9 @@ export class ProphetBot {
 		for (var i = 0; i < totalMoves.length; i++) {
 			var move = totalMoves[i];
 			var endPosition = currentPosition.add(move);
-			if (!this.enemyCanSee(visibleEnemies, endPosition)) {
+			if (this.controller.true_map[endPosition.x][endPosition.y] === true &&
+					this.controller.robot_map[endPosition.x][endPosition.y] === 0 && 
+					(!this.enemyCanSee(visibleEnemies, endPosition))) {
 				bestMove = move;
 				break;
 			}
