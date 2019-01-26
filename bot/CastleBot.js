@@ -274,6 +274,15 @@ export class CastleBot {
 				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
 			}
 		}
+		if (ourScore <= 40 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP) {
+			return true;
+		}
+		if (ourScore <= 80 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP * 2 / 3) {
+			return true;
+		}
+		if (ourScore <= 120 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP / 3) {
+			return true;
+		}
 		return ourScore < enemyScore * 2;
 	}
 	turn() {
