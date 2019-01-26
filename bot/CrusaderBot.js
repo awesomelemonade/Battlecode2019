@@ -3,7 +3,12 @@ import * as Util from './Util';
 import {Dijkstras} from './Dijkstras'
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 
-const SIGNAL_PROTOCOL;
+const SQUAD_LEADER_BITSHIFT = 0; // matches this.isLeader
+const SQUAD_RUSH_BITSHIFT = 1; // matches this.isRushing
+// unused bits 2 & 3
+const SQUAD_LOCATION_X_BITSHIFT = 4;
+const SQUAD_LOCATION_Y_BITSHIFT = 10;
+const SQUAD_LOCATION_BITMASK = 0b111111;
 
 export class CrusaderBot {
 	constructor(controller) {
@@ -22,10 +27,10 @@ export class CrusaderBot {
 			this.controller.log("Crusader" + Vector.ofRobotPosition(this.controller.me) + " -> " + this.target);
 		}
 		this.isRushing = false; // if true, rush towards target
-		this.isLeader = false; // Ez access - the same as (squadLeader === this.controller.me.id)
-		this.hasLeader = false; // Used by squad members (squadLeader !== -1)
+		this.isLeader = false; // Ez access - the same as (squadLeaderId === this.controller.me.id)
+		this.hasLeader = false; // Used by squad members (squadLeaderId !== -1)
 		this.squadIds = []; // Used by leader
-		this.squadLeader = -1; // Used by squad members
+		this.squadLeaderId = -1; // Used by squad members
 		// Calculated expected rally points
 		var crusaderPosition = Vector.ofRobotPosition(this.controller.me);
 		var bfs = new Bfs(this.controller.map, crusaderPosition, totalMoves);
@@ -72,42 +77,22 @@ export class CrusaderBot {
 		}
 	}
 	getMoveForLeader() {
+		// Check if rushing
+		this.isRushing = false;
 		// Broadcast to nearby crusaders/preachers
-		var signalRadius = this.getFurthestCombatUnitDistance();
-		if (signalRadius > 0) {
-			// Broadcast we're a leader + secondaryRallyPosition
-		}
-	}
-	getMoveForSecondaryRally() {
-		
-	}
-	getMoveForPrimaryRally() {
-		// Everybody goes to first rally point to receive signal for the second rally point (and id of "leader") - guarantees there is space for units to see "leader"
-		// After "leader" decides to rush, will broadcast a large signal (combat units will know it's from our team because it has seen the leader's id)
-		// This large signal will signal to attack
-		
-		var move = getMoveForRally(this.primaryRallyPosition, 2);
-		if (move === null) {
-			// Become leader
-			this.isLeader = true;
-			// Do rally leader's move
-			return this.getMoveForRallyLeader();
-		} else {
-			return move;
-		}
-		
-		// Check if we should switch to rushing
-		// Broadcast if we're rushing - broadcast secondary rally point
-	}
-	getFurthestCombatUnitDistance() {
 		var largestDistanceSquared = 0;
 		var robots = controller.getVisibleRobots();
 		for (var i = 0; i < robots.length; i++) {
 			var robot = robots[i];
-			if (!controller.isVisible(robot)) {
+			if (!this.controller.isVisible(robot)) {
 				continue;
 			}
 			if (robot.unit === SPECS.CRUSADER || robot.unit === SPECS.PREACHER) {
+				if (squadIds.include(robot.id)) {
+					continue;
+				}
+				// Recruit to squad
+				squadIds.push(robot.id);
 				// Avoid using vectors
 				var dx = this.controller.me.x - robot.x;
 				var dy = this.controller.me.y - robot.y;
@@ -117,7 +102,45 @@ export class CrusaderBot {
 				}
 			}
 		}
-		return largestDistanceSquared;
+		var signalRadius = largestDistanceSquared;
+		if (this.isRushing) {
+			signalRadius = 400; // costs 20 fuel
+		}
+		if (signalRadius > 0) {
+			// Broadcast we're a leader + secondaryRallyPosition
+			var signal = 0;
+			// Set leader
+			signal |= (1 << SQUAD_LEADER_BITSHIFT);
+			if (this.isRushing) {
+				signal |= (1 << SQUAD_RUSH_BITSHIFT);
+				// Set secondaryRallyPosition
+				signal |= (this.target.x << SQUAD_LOCATION_X_BITSHIFT);
+				signal |= (this.target.y << SQUAD_LOCATION_Y_BITSHIFT);
+			} else {
+				// Set secondaryRallyPosition
+				signal |= (this.secondaryRallyPosition.x << SQUAD_LOCATION_X_BITSHIFT);
+				signal |= (this.secondaryRallyPosition.y << SQUAD_LOCATION_Y_BITSHIFT);
+			}
+			// Signal
+			this.controller.signal(signal, signalRadius);
+		}
+	}
+	getMoveForSecondaryRally() {
+		return getMoveForRally(this.secondaryRallyPosition, 5);
+	}
+	getMoveForPrimaryRally() {
+		// Everybody goes to first rally point to receive signal for the second rally point (and id of "leader") - guarantees there is space for units to see "leader"
+		// After "leader" decides to rush, will broadcast a large signal (combat units will know it's from our team because it has seen the leader's id)
+		// This large signal will signal to attack
+		var move = getMoveForRally(this.primaryRallyPosition, 2);
+		if (move === null) {
+			// Become leader
+			this.isLeader = true;
+			// Do rally leader's move
+			return this.getMoveForRallyLeader();
+		} else {
+			return move;
+		}
 	}
 	getMoveForRally(rallyPosition, distance) {
 		var crusaderPosition = Vector.ofRobotPosition(this.controller.me);
@@ -144,8 +167,48 @@ export class CrusaderBot {
 		}
 	}
 	turn() {
-		// Process Signals
-		
+		if (!this.isRushing) {
+			// Process Signals
+			if (this.hasLeader) {
+				if (!this.isLeader) {
+					// Listen for rush signal
+					// TODO: is it possible to use this.controller.getRobot(id) to retrieve signals?
+					var robot = Util.findRobot((robot) => robot.id === this.squadLeaderId, false);
+					if (this.controller.isRadioing(robot)) {
+						var signal = robot.signal;
+						this.isRushing = ((signal >>> SQUAD_RUSH_BITSHIFT) & 1) === 1;
+						var targetX = ((signal >>> SQUAD_LOCATION_X_BITSHIFT) & SQUAD_LOCATION_BITMASK);
+						var targetY = ((signal >>> SQUAD_LOCATION_Y_BITSHIFT) & SQUAD_LOCATION_BITMASK);
+						this.target = new Vector(targetX, targetY);
+					}
+				}
+			} else {
+				// Listen for leader signal
+				var self = this;
+				var robot = Util.findRobot(function(robot) {
+					if (robot.team === self.controller.me.team) {
+						if (robot.unit === SPECS.CRUSADER || robot.unit === SPECS.PREACHER) {
+							if (self.isRadioing(robot)) {
+								return true;
+							}
+						}
+					}
+					return false;
+				});
+				if (robot !== null) {
+					var signal = robot.signal;
+					var isLeader = ((signal >> SQUAD_LEADER_BITSHIFT) & 1) === 1;
+					if (isLeader) {
+						this.squadLeaderId = robot.id;
+						this.hasLeader = true;
+						this.isRushing = ((signal >>> SQUAD_RUSH_BITSHIFT) & 1) === 1;
+						var x = ((signal >>> SQUAD_LOCATION_X_BITSHIFT) & SQUAD_LOCATION_BITMASK);
+						var y = ((signal >>> SQUAD_LOCATION_Y_BITSHIFT) & SQUAD_LOCATION_BITMASK);
+						this.secondaryRallyPosition = new Vector(x, y);
+					}
+				}
+			}
+		}
 		// Do turn
 		var visibleEnemies = Util.getVisibleEnemies();
 		if (visibleEnemies.length === 0) {
