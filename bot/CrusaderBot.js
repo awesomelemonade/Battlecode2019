@@ -1,6 +1,7 @@
 import {SPECS} from 'battlecode'
 import * as Util from './Util';
 import {Dijkstras} from './Dijkstras'
+import {Bfs} from './Bfs'
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 
 const SQUAD_LEADER_BITSHIFT = 0; // matches this.isLeader
@@ -38,23 +39,25 @@ export class CrusaderBot {
 		if (stop === undefined) {
 			this.controller.log("Failed to calculate expected rally point");
 		} else {
-			var route = this.getRoute(dijkstras, crusaderPosition, stop);
+			var route = this.getRoute(bfs, crusaderPosition, stop);
 			// arbitrary index - fraction of the route
-			var primaryIndex = Math.min(Math.floor(route.length / 3), 10);
+			var primaryIndex = Math.min(Math.floor(route.length / 5), 10);
 			var secondaryIndex = primaryIndex + Math.min(Math.floor(route.length / 5), 3);
 			this.primaryRallyPosition = route[primaryIndex];
 			this.secondaryRallyPosition = route[secondaryIndex];
+			this.controller.log("Rally points: " + this.primaryRallyPosition + " - " + this.secondaryRallyPosition);
 		}
 	}
-	getRoute(dijkstras, start, location) {
+	getRoute(bfs, start, location) {
 		var route = [location];
 		while (!location.equals(start)) {
-			location = dijkstras.prev[current.x][current.y];
-			route.push(location);
+			location = bfs.prev[location.x][location.y];
+			route.unshift(location); // route would be backwards if you push()
 		}
 		return route;
 	}
 	getAttackMove() {
+		// TODO
 		// Attack enemy units
 		// Move towards visible enemy units
 		// Broadcast enemy unit
@@ -78,21 +81,23 @@ export class CrusaderBot {
 	}
 	getMoveForLeader() {
 		// Check if rushing
-		this.isRushing = false;
+		if (this.squadIds.length > 5) {
+			this.isRushing = true;
+		}
 		// Broadcast to nearby crusaders/preachers
 		var largestDistanceSquared = 0;
-		var robots = controller.getVisibleRobots();
+		var robots = this.controller.getVisibleRobots();
 		for (var i = 0; i < robots.length; i++) {
 			var robot = robots[i];
 			if (!this.controller.isVisible(robot)) {
 				continue;
 			}
 			if (robot.unit === SPECS.CRUSADER || robot.unit === SPECS.PREACHER) {
-				if (squadIds.include(robot.id)) {
+				if (this.squadIds.includes(robot.id)) {
 					continue;
 				}
 				// Recruit to squad
-				squadIds.push(robot.id);
+				this.squadIds.push(robot.id);
 				// Avoid using vectors
 				var dx = this.controller.me.x - robot.x;
 				var dy = this.controller.me.y - robot.y;
@@ -104,7 +109,7 @@ export class CrusaderBot {
 		}
 		var signalRadius = largestDistanceSquared;
 		if (this.isRushing) {
-			signalRadius = 400; // costs 20 fuel
+			signalRadius = 400; // r = 20, costs 20 fuel
 		}
 		if (signalRadius > 0) {
 			// Broadcast we're a leader + secondaryRallyPosition
@@ -126,18 +131,19 @@ export class CrusaderBot {
 		}
 	}
 	getMoveForSecondaryRally() {
-		return getMoveForRally(this.secondaryRallyPosition, 5);
+		return this.getMoveForRally(this.secondaryRallyPosition, 5);
 	}
 	getMoveForPrimaryRally() {
 		// Everybody goes to first rally point to receive signal for the second rally point (and id of "leader") - guarantees there is space for units to see "leader"
 		// After "leader" decides to rush, will broadcast a large signal (combat units will know it's from our team because it has seen the leader's id)
 		// This large signal will signal to attack
-		var move = getMoveForRally(this.primaryRallyPosition, 2);
+		var move = this.getMoveForRally(this.primaryRallyPosition, 2);
 		if (move === null) {
+			this.controller.log(Vector.ofRobotPosition(this.controller.me) + " is becoming leader @ " + this.primaryRallyPosition);
 			// Become leader
 			this.isLeader = true;
 			// Do rally leader's move
-			return this.getMoveForRallyLeader();
+			return this.getMoveForLeader();
 		} else {
 			return move;
 		}
@@ -148,21 +154,16 @@ export class CrusaderBot {
 		var stop = dijkstras.resolve((location) => (location.getDistanceSquared(rallyPosition) <= distance));
 		if (stop === undefined) {
 			// Cannot reach
+			this.controller.log(crusaderPosition + " cannot reach rally position: " + rallyPosition + " @ distance " + distance);
 			return undefined;
 		} else {
-			if (stop.getDistanceSquared(rallyPosition) <= distance) {
-				// Reached primaryRallyPosition
-				// TODO: check if we should become leader
+			var move = Util.getMove(dijkstras, crusaderPosition, stop);
+			if (move.isZero()) {
+				// Reached rallyPosition
 				return null;
 			} else {
-				var move = Util.getMove(dijkstras, crusaderPosition, stop);
-				if (move.isZero()) {
-					this.controller.log("Rally - move is zero when not at rally position?");
-					return undefined;
-				} else {
-					// Move towards primaryRallyPosition
-					return this.controller.move(move.x, move.y);
-				}
+				// Move towards primaryRallyPosition
+				return this.controller.move(move.x, move.y);
 			}
 		}
 	}
@@ -188,7 +189,7 @@ export class CrusaderBot {
 				var robot = Util.findRobot(function(robot) {
 					if (robot.team === self.controller.me.team) {
 						if (robot.unit === SPECS.CRUSADER || robot.unit === SPECS.PREACHER) {
-							if (self.isRadioing(robot)) {
+							if (self.controller.isRadioing(robot)) {
 								return true;
 							}
 						}
@@ -224,13 +225,14 @@ export class CrusaderBot {
 			}
 			return this.getMoveForPrimaryRally();
 		} else {
+			// TODO
 			// We see at least 1 enemy
-			var attackMove = Util.getAttackMove();
+			/*var attackMove = Util.getAttackMove();
 			if (attackMove === undefined) {
 				return this.getMoveForLattice();
 			} else {
 				return attackMove;
-			}
+			}*/
 		}
 	}
 }

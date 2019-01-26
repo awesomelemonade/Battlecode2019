@@ -215,6 +215,37 @@ export class CastleBot {
 			return true;
 		}
 	}
+	spawnCrusader() {
+		// Check costs of prophet
+		if (!Util.isAffordable(SPECS.PROPHET)) {
+			return false;
+		}
+		var self = this;
+		// Calculate which adjacent tile to build the crusader using Bfs
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var start = Util.getAdjacentPassable(castlePosition);
+		var bfs = new Bfs(this.controller.map, start, totalMoves, totalMoveCosts);
+		var stop = bfs.resolve(function(location) { // Stop Condition
+			for (var i = 0; i < self.enemyCastlePredictions.length; i++) {
+				if (self.enemyCastlePredictions[i].equals(location)) {
+					return true;
+				}
+			}
+			return false;
+		});
+		if (stop === undefined) {
+			this.controller.log("Cannot find enemy castle prediction for spawning crusader");
+			return false;
+		} else {
+			var traced = Util.trace(bfs, stop);
+			var offset = traced.subtract(castlePosition);
+			// Build the unit
+			this.action = this.controller.buildUnit(SPECS.CRUSADER, offset.x, offset.y);
+			// Signal to crusader
+			this.controller.signal(Util.encodePosition(stop), offset.x * offset.x + offset.y * offset.y);
+			return true;
+		}
+	}
 	removeDeadRobots(robots) {
 		var counter = 0;
 		for (var i = 0; i < robots.length; i++) {
@@ -385,6 +416,10 @@ export class CastleBot {
 									if (((this.controller.karbonite > 500 && this.controller.fuel > 1250 && this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 100) / 100))
 											|| this.controller.me.turn > 600) && this.isAffordable(SPECS.PROPHET)) {
 										this.spawnLatticeProphet();
+									} else {
+										if (this.controller.karbonite > 250 && this.controller.fuel > 5000) {
+											this.spawnCrusader();
+										}
 									}
 									this.churchesBuilt = true;
 								} else {
