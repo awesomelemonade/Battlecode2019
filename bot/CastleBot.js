@@ -381,8 +381,8 @@ export class CastleBot {
 							} else {
 								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
-									// No more church locations
-									if (this.isAffordable(SPECS.PROPHET)) {
+									// No more church locations - reserve karbonite/fuel for defending
+									if (this.controller.karbonite > 500 && this.controller.fuel > 1250 && this.isAffordable(SPECS.PROPHET)) {
 										this.spawnLatticeProphet();
 									}
 									this.churchesBuilt = true;
