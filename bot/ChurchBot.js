@@ -250,7 +250,7 @@ export class ChurchBot {
 		if (ourScore <= 120 && this.controller.me.health < SPECS.UNITS[SPECS.CHURCH].STARTING_HP / 3) {
 			return true;
 		}
-		return ourScore < enemyScore * 2;
+		return ourScore < enemyScore * 4;
 	}
 	turn() {
 		var self = this;

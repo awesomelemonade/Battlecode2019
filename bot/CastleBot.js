@@ -287,7 +287,7 @@ export class CastleBot {
 		if (ourScore <= 120 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP / 3) {
 			return true;
 		}
-		return ourScore < enemyScore * 2;
+		return ourScore < enemyScore * 4;
 	}
 	turn() {
 		var self = this;
@@ -375,14 +375,15 @@ export class CastleBot {
 							// If already spawned for church
 							// Save for church
 							if (churchInfoTransmitting) {
-								if (((this.controller.karbonite > 500 && this.controller.fuel > 1250) || this.controller.me.turn > 500) && this.isAffordable(SPECS.PROPHET)) {
+								/*if (((this.controller.karbonite > 500 && this.controller.fuel > 1250) || this.controller.me.turn > 500) && this.isAffordable(SPECS.PROPHET)) {
 									this.spawnLatticeProphet();
-								}
+								}*/
 							} else {
 								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
 									// No more church locations - reserve karbonite/fuel for defending
-									if (((this.controller.karbonite > 500 && this.controller.fuel > 1250) || this.controller.me.turn > 500) && this.isAffordable(SPECS.PROPHET)) {
+									if (((this.controller.karbonite > 500 && this.controller.fuel > 1250 && this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 100) / 100))
+											|| this.controller.me.turn > 600) && this.isAffordable(SPECS.PROPHET)) {
 										this.spawnLatticeProphet();
 									}
 									this.churchesBuilt = true;

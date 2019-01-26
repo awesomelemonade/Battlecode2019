@@ -43,13 +43,13 @@ class MyRobot extends BCAbstractRobot {
 			this.init();
 		}
 		this.controller.turn(); // Preparation of controller
-		if (this.controller.me.time < this.timeBuffer) {
+		/*if (this.controller.me.time < this.timeBuffer) {
 			// We have no time!
 			this.controller.log("Skipped " + this.getUnitTypeName(this.controller.me.unit) + 
 					"[" + this.controller.me.x + ", " + this.controller.me.y + "]" + ": " + 
 					this.controller.me.time + "ms/" + this.timeBuffer + "ms");
 			return undefined;
-		}
+		}*/
 		var beforeTime = new Date().getTime();
 		var action = this.bot.turn(); // Execute Turn
 		var time = ((new Date().getTime()) - beforeTime);
