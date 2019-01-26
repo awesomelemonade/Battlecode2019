@@ -150,7 +150,7 @@ export class PilgrimBot {
 		}
 		// Assume We don't see enemy
 		if (this.isBuildingChurch) {
-			action = this.getMoveForBuildChurch(); // lol ugly code
+			action = this.getMoveForBuildChurch();
 		} else {
 			if (this.controller.me.fuel >= SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY ||
 					this.controller.me.karbonite >= SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
@@ -161,7 +161,7 @@ export class PilgrimBot {
 			}
 		}
 		var visibleEnemies = Util.getVisibleEnemies();
-		if (visibleEnemies.length >= 0) {
+		if (visibleEnemies.length > 0) {
 			// There's an enemy
 			var start = Vector.ofRobotPosition(this.controller.me);
 			var destination = null;
