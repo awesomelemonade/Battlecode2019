@@ -1,6 +1,5 @@
 import {SPECS} from 'battlecode'
 import * as Util from './Util';
-import {Dijkstras} from './Dijkstras'
 import {Bfs} from './Bfs'
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 
@@ -57,6 +56,7 @@ export class CrusaderBot {
 		return route;
 	}
 	getAttackMove() {
+		return Util.getAttackMove();
 		// TODO
 		// Attack enemy units
 		// Move towards visible enemy units
@@ -65,13 +65,13 @@ export class CrusaderBot {
 	getMoveForTarget() {
 		// Rush towards target
 		var crusaderPosition = Vector.ofRobotPosition(this.controller.me);
-		var dijkstras = new Dijkstras(this.controller.map, crusaderPosition, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((location) => location.equals(this.target));
+		var bfs = new Bfs(this.controller.map, crusaderPosition, totalMoves);
+		var stop = bfs.resolve((location) => location.equals(this.target));
 		if (stop === undefined) {
 			// Cannot reach
 			return undefined;
 		} else {
-			var move = Util.getMove(dijkstras, crusaderPosition, stop);
+			var move = Util.getMove(bfs, crusaderPosition, stop);
 			if (move.isZero()) {
 				this.controller.log("Move is zero when moving towards target?");
 			} else {
@@ -81,7 +81,8 @@ export class CrusaderBot {
 	}
 	getMoveForLeader() {
 		// Check if rushing
-		if (this.squadIds.length > 5) {
+		if (this.squadIds.length > 3) {
+			this.controller.log("Rushing! target=" + this.target + " squad=" + this.squadIds);
 			this.isRushing = true;
 		}
 		// Broadcast to nearby crusaders/preachers
@@ -142,6 +143,7 @@ export class CrusaderBot {
 			this.controller.log(Vector.ofRobotPosition(this.controller.me) + " is becoming leader @ " + this.primaryRallyPosition);
 			// Become leader
 			this.isLeader = true;
+			this.hasLeader = true;
 			// Do rally leader's move
 			return this.getMoveForLeader();
 		} else {
@@ -150,14 +152,14 @@ export class CrusaderBot {
 	}
 	getMoveForRally(rallyPosition, distance) {
 		var crusaderPosition = Vector.ofRobotPosition(this.controller.me);
-		var dijkstras = new Dijkstras(this.controller.map, crusaderPosition, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((location) => (location.getDistanceSquared(rallyPosition) <= distance));
+		var bfs = new Bfs(this.controller.map, crusaderPosition, totalMoves, totalMoveCosts);
+		var stop = bfs.resolve((location) => (location.getDistanceSquared(rallyPosition) <= distance));
 		if (stop === undefined) {
 			// Cannot reach
 			this.controller.log(crusaderPosition + " cannot reach rally position: " + rallyPosition + " @ distance " + distance);
 			return undefined;
 		} else {
-			var move = Util.getMove(dijkstras, crusaderPosition, stop);
+			var move = Util.getMove(bfs, crusaderPosition, stop);
 			if (move.isZero()) {
 				// Reached rallyPosition
 				return null;
@@ -178,9 +180,12 @@ export class CrusaderBot {
 					if (this.controller.isRadioing(robot)) {
 						var signal = robot.signal;
 						this.isRushing = ((signal >>> SQUAD_RUSH_BITSHIFT) & 1) === 1;
-						var targetX = ((signal >>> SQUAD_LOCATION_X_BITSHIFT) & SQUAD_LOCATION_BITMASK);
-						var targetY = ((signal >>> SQUAD_LOCATION_Y_BITSHIFT) & SQUAD_LOCATION_BITMASK);
-						this.target = new Vector(targetX, targetY);
+						if (this.isRushing) {
+							var targetX = ((signal >>> SQUAD_LOCATION_X_BITSHIFT) & SQUAD_LOCATION_BITMASK);
+							var targetY = ((signal >>> SQUAD_LOCATION_Y_BITSHIFT) & SQUAD_LOCATION_BITMASK);
+							this.target = new Vector(targetX, targetY);
+							this.controller.log("Received rush signal: " + this.target);
+						}
 					}
 				}
 			} else {
@@ -206,33 +211,29 @@ export class CrusaderBot {
 						var x = ((signal >>> SQUAD_LOCATION_X_BITSHIFT) & SQUAD_LOCATION_BITMASK);
 						var y = ((signal >>> SQUAD_LOCATION_Y_BITSHIFT) & SQUAD_LOCATION_BITMASK);
 						this.secondaryRallyPosition = new Vector(x, y);
+						this.controller.log("Found Leader: " + this.squadLeaderId + " - " + this.secondaryRallyPosition);
 					}
 				}
 			}
 		}
 		// Do turn
 		var visibleEnemies = Util.getVisibleEnemies();
-		if (visibleEnemies.length === 0) {
-			// Don't see enemy
-			if (this.isRushing) {
-				return this.getMoveForTarget();
-			}
-			if (this.isLeader) {
-				return this.getMoveForLeader();
-			}
-			if (this.hasLeader) {
-				return this.getMoveForSecondaryRally();
-			}
-			return this.getMoveForPrimaryRally();
-		} else {
-			// TODO
-			// We see at least 1 enemy
-			/*var attackMove = Util.getAttackMove();
-			if (attackMove === undefined) {
-				return this.getMoveForLattice();
-			} else {
+		if (visibleEnemies.length > 0) {
+			var attackMove = this.getAttackMove();
+			if (attackMove !== undefined) {
 				return attackMove;
-			}*/
+			}
 		}
+		// Don't see enemy
+		if (this.isRushing) {
+			return this.getMoveForTarget();
+		}
+		if (this.isLeader) {
+			return this.getMoveForLeader();
+		}
+		if (this.hasLeader) {
+			return this.getMoveForSecondaryRally();
+		}
+		return this.getMoveForPrimaryRally();
 	}
 }

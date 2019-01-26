@@ -48,7 +48,7 @@ export function resolve(c, localCastlePositions, localEnemyCastlePredictions, lo
 	bfs.resolve(function(vector, cost) {
 		potential[vector.x][vector.y] = true;
 		count++;
-		return cost > 2 * responsibleDistanceRadius;
+		return cost > responsibleDistanceRadius;
 	});
 	controller.log("ChurchLocationFinder resolve(): resources.length=" + resources.length + ", count=" + count);
 }
