@@ -274,6 +274,10 @@ export class CastleBot {
 				enemyScore += SPECS.UNITS[robot.unit].STARTING_HP;
 			}
 		}
+		if (enemyScore === 0 && this.pilgrims[0] === -1) {
+			// We need karbonite pilgrims!
+			return false;
+		}
 		if (ourScore <= 40 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP) {
 			return true;
 		}
