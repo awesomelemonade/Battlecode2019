@@ -375,14 +375,14 @@ export class CastleBot {
 							// If already spawned for church
 							// Save for church
 							if (churchInfoTransmitting) {
-								if (this.isAffordable(SPECS.PROPHET)) {
+								if (((this.controller.karbonite > 500 && this.controller.fuel > 1250) || this.controller.me.turn > 500) && this.isAffordable(SPECS.PROPHET)) {
 									this.spawnLatticeProphet();
 								}
 							} else {
 								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
 									// No more church locations - reserve karbonite/fuel for defending
-									if (this.controller.karbonite > 500 && this.controller.fuel > 1250 && this.isAffordable(SPECS.PROPHET)) {
+									if (((this.controller.karbonite > 500 && this.controller.fuel > 1250) || this.controller.me.turn > 500) && this.isAffordable(SPECS.PROPHET)) {
 										this.spawnLatticeProphet();
 									}
 									this.churchesBuilt = true;
