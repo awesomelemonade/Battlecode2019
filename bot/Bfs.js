@@ -1,6 +1,7 @@
 import {Vector} from './Library'
 import {outOfBounds} from './Util'
 
+const IGNORED = -2;
 const UNEXPLORED = -1;
 export class Bfs {
 	constructor(terrainMap, start, moves) {
@@ -24,23 +25,24 @@ export class Bfs {
 	resolve(stopCondition = (vector) => false, ignoreCondition = (condition) => false) {
 		while (this.queue.length !== 0) {
 			var popped = this.queue.shift();
-			if (stopCondition(popped)) {
+			var currentCost = this.dist[popped.x][popped.y];
+			if (stopCondition(popped, currentCost)) {
 				return popped;
 			}
-			var currentCost = this.dist[popped.x][popped.y];
 			for (var i = 0; i < this.moves.length; i++) {
 				var offset = this.moves[i];
 				var toExplore = popped.add(offset);
 				if (outOfBounds(toExplore) || (this.terrainMap[toExplore.x][toExplore.y] === false)) {
 					continue;
 				}
-				if (this.dist[toExplore.x][toExplore.y] == UNEXPLORED) {
+				if (this.dist[toExplore.x][toExplore.y] === UNEXPLORED) {
 					if (ignoreCondition(toExplore)) {
-						continue;
+						this.dist[toExplore.x][toExplore.y] = IGNORED;
+					} else {
+						this.dist[toExplore.x][toExplore.y] = currentCost + 1;
+						this.prev[toExplore.x][toExplore.y] = popped;
+						this.queue.push(toExplore);
 					}
-					this.dist[toExplore.x][toExplore.y] = currentCost + 1;
-					this.prev[toExplore.x][toExplore.y] = popped;
-					this.queue.push(toExplore);
 				}
 			}
 		}

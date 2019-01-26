@@ -17,8 +17,10 @@ var validChurchLocation;
 var numResources;
 var resourceDistance;
 var resolved;
+var potential;
 
 var initialized = false;
+var adjacentMoves = [new Vector(0, 1), new Vector(1, 0), new Vector(0, -1), new Vector(-1, 0), new Vector(-1, 1), new Vector(1, -1), new Vector(-1, -1), new Vector(1, 1)]
 
 export function resolve(c, localCastlePositions, localEnemyCastlePredictions, localStructurePositions) {
 	controller = c;
@@ -27,22 +29,40 @@ export function resolve(c, localCastlePositions, localEnemyCastlePredictions, lo
 	structurePositions = localStructurePositions;
 	map = controller.true_map;
 	resolved = new Array(map.length).fill().map(() => Array(map[0].length).fill(false));
+	potential = new Array(map.length).fill().map(() => Array(map[0].length).fill(false));
 	validChurchLocation = new Array(map.length).fill().map(() => Array(map[0].length).fill(false));
 	numResources = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
 	resourceDistance = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
 	initialized = true;
+	var resources = []
+	for (var i = 0; i < map.length; i++) {
+		for (var j = 0; j < map[0].length; j++) {
+			var location = new Vector(i, j);
+			if (Util.hasResource(location)) {
+				resources.push(location);
+			}
+		}
+	}
+	var count = 0;
+	var bfs = new Bfs(controller.true_map, resources, adjacentMoves);
+	bfs.resolve(function(vector, cost) {
+		potential[vector.x][vector.y] = true;
+		count++;
+		return cost > 2 * responsibleDistanceRadius;
+	});
+	controller.log("ChurchLocationFinder resolve(): resources.length=" + resources.length + ", count=" + count);
 }
 
 function resolveLocation(location) {
 	if (resolved[location.x][location.y]) {
 		return;
 	}
-	var info = getChurchLocationInfo(location);
-	validChurchLocation[location.x][location.y] = info.valid;
-	if (validChurchLocation[location.x][location.y]) {
-		numResources[location.x][location.y] = info.numResources;
-		resourceDistance[location.x][location.y] = info.resourceDistance;
+	if (!potential[location.x][location.y]) {
+		resolved[location.x][location.y] = true;
+		validChurchLocation[location.x][location.y] = false;
+		return;
 	}
+	getChurchLocationInfo(location);
 	resolved[location.x][location.y] = true;
 }
 
@@ -110,39 +130,45 @@ export function findChurchLocation() {
 function getChurchLocationInfo(location) {
 	// Ensure not on top of resource
 	if (Util.hasResource(location)) {
-		return {valid: false};
+		validChurchLocation[location.x][location.y] = false;
+		return;
 	}
 	// Ensure not too close to other structures
 	for (var i = 0; i < structurePositions.length; i++) {
 		var position = structurePositions[i];
 		if (location.getDistanceSquared(position) <= responsibleDistanceDoubled) {
-			return {valid: false};
+			validChurchLocation[location.x][location.y] = false;
+			return;
 		}
 	}
 	// Ensure not near enemy castle predictions
 	for (var i = 0; i < enemyCastlePredictions.length; i++) {
 		var position = enemyCastlePredictions[i];
 		if (location.getDistanceSquared(position) <= responsibleDistanceDoubled) {
-			return {valid: false};
+			validChurchLocation[location.x][location.y] = false;
+			return;
 		}
 	}
 	// Check if there resources around the responsibleDistance
 	var start = Util.getAdjacentPassableTrueMap(location);
-	var bfs = new Bfs(controller.true_map, start, totalMoves, totalMoveCosts);
-	var numResources = 0;
-	var resourceDistance = 0;
+	var bfs = new Bfs(controller.true_map, start, totalMoves);
+	var currentNumResources = 0;
+	var currentResourceDistance = 0;
 	bfs.resolve(function(position) { // Stop condition
 		// Stop condition is guaranteed to be evaluated only once per square
 		if (Util.hasResource(position)) {
-			numResources++;
-			resourceDistance += location.getDistanceSquared(position);
+			currentNumResources++;
+			currentResourceDistance += location.getDistanceSquared(position);
 		}
 		return false; // Never trigger the stop condition
 	}, function(position) { // Ignore condition
 		return location.getDistanceSquared(position) > responsibleDistance;
 	});
-	if (numResources === 0) {
-		return {valid: false};
+	if (currentNumResources === 0) {
+		validChurchLocation[location.x][location.y] = false;
+		return;
 	}
-	return {valid: true, numResources: numResources, resourceDistance: resourceDistance};
+	validChurchLocation[location.x][location.y] = true;
+	numResources[location.x][location.y] = currentNumResources;
+	resourceDistance[location.x][location.y] = currentResourceDistance;
 }

@@ -2,6 +2,7 @@ import {PriorityQueue} from './PriorityQueue'
 import {Vector} from './Library'
 import {outOfBounds} from './Util'
 
+const IGNORED = -2;
 const UNEXPLORED = -1;
 export class Dijkstras {
 	constructor(terrainMap, start, moves, moveCosts) {
@@ -37,13 +38,16 @@ export class Dijkstras {
 					continue;
 				}
 				var moveCost = currentCost + this.moveCosts[i];
-				if (this.dist[toExplore.x][toExplore.y] == UNEXPLORED) {
+				if (this.dist[toExplore.x][toExplore.y] === IGNORED) {
+					continue;
+				} else if (this.dist[toExplore.x][toExplore.y] === UNEXPLORED) {
 					if (ignoreCondition(toExplore)) {
-						continue;
+						this.dist[toExplore.x][toExplore.y] = IGNORED;
+					} else {
+						this.dist[toExplore.x][toExplore.y] = moveCost;
+						this.prev[toExplore.x][toExplore.y] = popped;
+						this.queue.push(toExplore, moveCost);
 					}
-					this.dist[toExplore.x][toExplore.y] = moveCost;
-					this.prev[toExplore.x][toExplore.y] = popped;
-					this.queue.push(toExplore, moveCost);
 				} else if (moveCost < this.dist[toExplore.x][toExplore.y]) {
 					this.dist[toExplore.x][toExplore.y] = moveCost;
 					this.prev[toExplore.x][toExplore.y] = popped;
