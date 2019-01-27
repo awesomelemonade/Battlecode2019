@@ -325,14 +325,26 @@ export class CastleBot {
 			// We need karbonite pilgrims!
 			return false;
 		}
-		if (ourScore <= 40 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP) {
-			return true;
-		}
-		if (ourScore <= 80 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP * 2 / 3) {
-			return true;
-		}
-		if (ourScore <= 120 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP / 3) {
-			return true;
+		if (this.churchesBuilt) {
+			if (ourScore <= 360 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP) {
+				return true;
+			}
+			if (ourScore <= 460 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP * 2 / 3) {
+				return true;
+			}
+			if (ourScore <= 560 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP / 3) {
+				return true;
+			}
+		} else {
+			if (ourScore <= 40 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP) {
+				return true;
+			}
+			if (ourScore <= 80 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP * 2 / 3) {
+				return true;
+			}
+			if (ourScore <= 120 && this.controller.me.health < SPECS.UNITS[SPECS.CASTLE].STARTING_HP / 3) {
+				return true;
+			}
 		}
 		return ourScore < enemyScore * 4;
 	}
