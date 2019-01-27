@@ -252,6 +252,24 @@ export class ChurchBot {
 		}
 		return ourScore < enemyScore * 4;
 	}
+	isAffordable(unitType, num = 1, bufferKarbonite = 0, bufferFuel = 0) {
+		return this.controller.karbonite >= SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE * num + bufferKarbonite &&
+						this.controller.fuel >= SPECS.UNITS[unitType].CONSTRUCTION_FUEL * num + bufferFuel;
+	}
+	countOurProphetsInVision() {
+		var count = 0;
+		var robots = this.controller.getVisibleRobots();
+		for (var i = 0; i < robots.length; i++) {
+			var robot = robots[i];
+			if (!this.controller.isVisible(robot)){
+				continue;
+			}
+			if (robot.team === this.controller.me.team && robot.unit === SPECS.PROPHET) {
+				count++;
+			}
+		}
+		return count;
+	}
 	turn() {
 		var self = this;
 		this.action = undefined;
@@ -277,7 +295,7 @@ export class ChurchBot {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {
-					if (this.controller.karbonite > 2000 && this.controller.fuel > 5000) {
+					if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 12) + 1, 400, 800)) {
 						this.spawnLatticeProphet();
 					}
 				}

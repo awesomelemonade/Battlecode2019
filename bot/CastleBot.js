@@ -296,11 +296,11 @@ export class CastleBot {
 		}
 		return numLower < Math.min(this.controller.karbonite / 10, this.controller.fuel / 50);
 	}
-	isAffordable(unitType) {
+	isAffordable(unitType, num = 1, bufferKarbonite = 0, bufferFuel = 0) {
 		return this.controller.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding +
-						SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE &&
+						SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE * num + bufferKarbonite &&
 				this.controller.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 
-						SPECS.UNITS[unitType].CONSTRUCTION_FUEL;
+						SPECS.UNITS[unitType].CONSTRUCTION_FUEL * num + bufferFuel;
 	}
 	shouldDefend() {
 		var ourScore = 0;
@@ -333,6 +333,20 @@ export class CastleBot {
 			return true;
 		}
 		return ourScore < enemyScore * 4;
+	}
+	countOurProphetsInVision() {
+		var count = 0;
+		var robots = this.controller.getVisibleRobots();
+		for (var i = 0; i < robots.length; i++) {
+			var robot = robots[i];
+			if (!this.controller.isVisible(robot)){
+				continue;
+			}
+			if (robot.team === this.controller.me.team && robot.unit === SPECS.PROPHET) {
+				count++;
+			}
+		}
+		return count;
 	}
 	turn() {
 		var self = this;
@@ -469,14 +483,13 @@ export class CastleBot {
 								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
 									// No more church locations - reserve karbonite/fuel for defending
-									if (((this.controller.karbonite > 500 && this.controller.fuel > 1250 && this.defendersAlive < this.pilgrimsAlive * ((this.controller.me.turn - 100) / 100))
-											|| this.controller.me.turn > 600) && this.isAffordable(SPECS.PROPHET)) {
+									
+									// Scale it up + 25 per prophet in range starting at 200 up to 800
+									if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 20) + 1, 200, 500)) {
 										this.spawnLatticeProphet();
-									} else {
-										if (this.controller.karbonite > 250 && this.controller.fuel > 5000) {
-											this.spawnCrusader();
-										}
 									}
+									// TODO: when to spawn crusader?
+									// this.spawnCrusader();
 									this.churchesBuilt = true;
 								} else {
 									if (churchLocation !== null) {
