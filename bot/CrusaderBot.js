@@ -3,12 +3,20 @@ import * as Util from './Util';
 import {Bfs} from './Bfs'
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 
+// regular signal
 const SQUAD_LEADER_BITSHIFT = 0; // matches this.isLeader
 const SQUAD_RUSH_BITSHIFT = 1; // matches this.isRushing
 // unused bits 2 & 3
 const SQUAD_LOCATION_X_BITSHIFT = 4;
 const SQUAD_LOCATION_Y_BITSHIFT = 10;
 const SQUAD_LOCATION_BITMASK = 0b111111;
+
+// castle talk
+const SQUAD_IDENTIFIER_BITSHIFT = 2;
+const SQUAD_DONE_BITSHIFT = 3;
+const SQUAD_INFO_BITSHIFT = 4;
+const SQUAD_INFO_BITMASK = 0b1111; // 4 bits
+const SQUAD_INFO_NUM_BITS = 4;
 
 export class CrusaderBot {
 	constructor(controller) {
@@ -31,6 +39,7 @@ export class CrusaderBot {
 		this.hasLeader = false; // Used by squad members (squadLeaderId !== -1)
 		this.squadIds = []; // Used by leader
 		this.squadLeaderId = -1; // Used by squad members
+		this.castleTalkQueue = [];
 		// Calculated expected rally points
 		var crusaderPosition = Vector.ofRobotPosition(this.controller.me);
 		var bfs = new Bfs(this.controller.map, crusaderPosition, totalMoves);
@@ -62,7 +71,41 @@ export class CrusaderBot {
 		// Move towards visible enemy units
 		// Broadcast enemy unit
 	}
+	targetIsKilled() {
+		var robotId = this.controller.robot_map[this.target.x][this.target.y];
+		if (robotId === -1) {
+			return false;
+		} else if (robotId === 0) {
+			return true;
+		} else {
+			var robot = this.controller.getRobot(robotId);
+			return robot.team === this.controller.me.team;
+		}
+	}
 	getMoveForTarget() {
+		// Check if target is dead
+		if (this.targetIsKilled()) {
+			this.controller.log(this.target + " target is killed!"); 
+			// Target is dead - castle talk to get new target
+			var pieces = [];
+			pieces.push((this.target.x >>> 2) & 0b1111);
+			pieces.push(((this.target.x & 0b11) << 2) | ((this.target.y >>> 4) & 0b11));
+			pieces.push(this.target.y & 0b1111);
+			for (var i = 0; i < pieces.length; i++) {
+				var signal = 0;
+				signal |= (1 << SQUAD_IDENTIFIER_BITSHIFT);
+				signal |= ((pieces[i] & SQUAD_INFO_BITMASK) << SQUAD_INFO_BITSHIFT);
+				if (i === pieces.length - 1) {
+					// Send "done" signal
+					signal |= (1 << SQUAD_DONE_BITSHIFT);
+				}
+				this.castleTalkQueue.push(signal);
+			}
+		}
+		// Send castle talk queue
+		if (this.castleTalkQueue.length > 0) {
+			this.controller.castleTalk(this.castleTalkQueue.shift());
+		}
 		// Rush towards target
 		var crusaderPosition = Vector.ofRobotPosition(this.controller.me);
 		var bfs = new Bfs(this.controller.map, crusaderPosition, totalMoves);
@@ -119,7 +162,7 @@ export class CrusaderBot {
 			signal |= (1 << SQUAD_LEADER_BITSHIFT);
 			if (this.isRushing) {
 				signal |= (1 << SQUAD_RUSH_BITSHIFT);
-				// Set secondaryRallyPosition
+				// Set target
 				signal |= (this.target.x << SQUAD_LOCATION_X_BITSHIFT);
 				signal |= (this.target.y << SQUAD_LOCATION_Y_BITSHIFT);
 			} else {
@@ -169,9 +212,29 @@ export class CrusaderBot {
 			}
 		}
 	}
+	checkNewTargets() {
+		if (this.controller.me.turn <= 1) {
+			return;
+		}
+		var visibleRobots = this.controller.getVisibleRobots();
+		for (var i = 0; i < visibleRobots.length; i++) {
+			var robot = visibleRobots[i];
+			if (this.controller.isRadioing(robot)) {
+				var robotId = robot.id;
+				if (this.controller.castles[robotId] !== undefined) {
+					// We found a signal from the castle
+					// Parse signal
+					this.target = Util.decodePosition(robot.signal);
+					this.controller.log("Received signal from castle: " + this.target + " - " + robot.signal_radius);
+				}
+			}
+		}
+	}
 	turn() {
+		// See if we received new target from castles
+		this.checkNewTargets();
+		// Process regular signals
 		if (!this.isRushing) {
-			// Process Signals
 			if (this.hasLeader) {
 				if (!this.isLeader) {
 					// Listen for rush signal

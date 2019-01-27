@@ -25,6 +25,12 @@ const CASTLE_PROGRESS_SCALE = Math.pow(2, CASTLE_PROGRESS_BITS);
 
 const CASTLE_BUILDCHURCH_BITSHIFT = 1;
 
+const SQUAD_IDENTIFIER_BITSHIFT = 2;
+const SQUAD_DONE_BITSHIFT = 3;
+const SQUAD_INFO_BITSHIFT = 4;
+const SQUAD_INFO_BITMASK = 0b1111; // 4 bits
+const SQUAD_INFO_NUM_BITS = 4;
+
 export class CastleBot {
 	constructor(controller) {
 		this.controller = controller;
@@ -41,6 +47,9 @@ export class CastleBot {
 		this.buildingChurchCastleTalkQueue = [];
 		this.churchesBuilt = false;
 		this.churchInit = false;
+		this.squadInfo = {};
+		this.signalQueue = [];
+		this.signalled = false;
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
 		this.progress = 0;
@@ -124,6 +133,7 @@ export class CastleBot {
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target
 		this.controller.signal((Util.encodePosition(resourcePosition) << 1), offset.x * offset.x + offset.y * offset.y);
+		this.signalled = true;
 		// Set retrieval of id for next turn
 		this.retrieveIndex = index;
 		this.retrieveArray = this.pilgrims;
@@ -158,6 +168,7 @@ export class CastleBot {
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target church location - TODO: PilgrimBot has to differentiate building church and harvesting
 		this.controller.signal((Util.encodePosition(churchLocation) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
+		this.signalled = true;
 		// Add to castle talk queue
 		this.buildingChurchCastleTalkQueue.push(churchLocation.x);
 		this.buildingChurchCastleTalkQueue.push(churchLocation.y);
@@ -204,6 +215,7 @@ export class CastleBot {
 			this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
 			// Signal to prophet
 			this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
+			this.signalled = true;
 			return true;
 		} else {
 			var traced = Util.trace(dijkstras, stop);
@@ -212,6 +224,7 @@ export class CastleBot {
 			this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
 			// Signal to prophet
 			this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
+			this.signalled = true;
 			return true;
 		}
 	}
@@ -243,6 +256,7 @@ export class CastleBot {
 			this.action = this.controller.buildUnit(SPECS.CRUSADER, offset.x, offset.y);
 			// Signal to crusader
 			this.controller.signal(Util.encodePosition(stop), offset.x * offset.x + offset.y * offset.y);
+			this.signalled = true;
 			return true;
 		}
 	}
@@ -323,6 +337,7 @@ export class CastleBot {
 	turn() {
 		var self = this;
 		this.action = undefined;
+		this.signalled = false;
 		// Retrieval id system
 		if (this.retrieveIndex !== -1) {
 			// Find unit
@@ -374,16 +389,57 @@ export class CastleBot {
 							this.progresses[robots[i].id] = robotProgress;
 						}
 					}
-				}
-				var robotIsChurch = ((robots[i].castle_talk >>> CHURCH_IDENTIFIER_BITSHIFT) & 1) === 1;
-				if (robotIsChurch) {
-					// Decrement numChurchesBuilding
-					if (robots[i].turn === 1) {
-						this.numChurchesBuilding--;
+				} else {
+					var robotIsChurch = ((robots[i].castle_talk >>> CHURCH_IDENTIFIER_BITSHIFT) & 1) === 1;
+					if (robotIsChurch) {
+						// Decrement numChurchesBuilding
+						if (robots[i].turn === 1) {
+							this.numChurchesBuilding--;
+						}
+						// Retrieve progresses
+						var robotProgress = ((robots[i].castle_talk >>> CASTLE_PROGRESS_BITSHIFT) & CASTLE_PROGRESS_BITMASK);
+						this.progresses[robots[i].id] = robotProgress;
+					} else {
+						var robotIsSquad = ((robots[i].castle_talk >>> SQUAD_IDENTIFIER_BITSHIFT) & 1) === 1;
+						if (robotIsSquad) {
+							var done = ((robots[i].castle_talk >>> SQUAD_DONE_BITSHIFT) & 1) === 1;
+							var info = ((robots[i].castle_talk >>> SQUAD_INFO_BITSHIFT) & SQUAD_INFO_BITMASK);
+							if (this.squadInfo[robots[i].id] === undefined) {
+								// Initialize squad info
+								this.squadInfo[robots[i].id] = 0;
+							}
+							// Append to squad info
+							this.squadInfo[robots[i].id] = (this.squadInfo[robots[i].id] << SQUAD_INFO_NUM_BITS) | info;
+							if (done) {
+								// Evaluate total signal
+								var signal = this.squadInfo[robots[i].id];
+								var x = (signal >>> 6) & 0b111111;
+								var y = signal & 0b111111;
+								this.controller.log("Received that enemy castle[" + x + ", " + y + "] was killed - signal=" + signal);
+								// Search in enemyCastlePredictions
+								var index = -1;
+								for (var j = 0; j < this.enemyCastlePredictions.length; j++) {
+									var prediction = this.enemyCastlePredictions[j];
+									if (prediction.x === x && prediction.y === y) {
+										index = j;
+										break;
+									}
+								}
+								// Remove from enemyCastlePredictions (if exists)
+								if (index !== -1) {
+									this.enemyCastlePredictions.splice(index, 1);
+									// All castles will probably end up sending 1 large signal
+									// Pick an arbitrary castle prediction
+									var randomEnemyCastlePosition = this.enemyCastlePredictions[Math.floor(Math.random() * this.enemyCastlePredictions.length)];
+									// Send signal with large radius
+									this.controller.log("Broadcasting bigly: " + randomEnemyCastlePosition);
+									this.signalQueue.push({signal: Util.encodePosition(randomEnemyCastlePosition), radius: 6889}); // r ^ 2 = 83 * 83
+								}
+								// Reset squad info
+								this.squadInfo[robots[i].id] = undefined;
+							}
+						}
 					}
-					// Retrieve progresses
-					var robotProgress = ((robots[i].castle_talk >>> CASTLE_PROGRESS_BITSHIFT) & CASTLE_PROGRESS_BITMASK);
-					this.progresses[robots[i].id] = robotProgress;
 				}
 			}
 		}
@@ -472,6 +528,11 @@ export class CastleBot {
 			}
 			// Send castle talk
 			this.controller.castleTalk(signal);
+		}
+		// Execute signal queue
+		if ((!this.signalled) && this.signalQueue.length > 0) {
+			var signalInfo = this.signalQueue.shift();
+			this.controller.signal(signalInfo.signal, signalInfo.radius);
 		}
 		return this.action;
 	}
