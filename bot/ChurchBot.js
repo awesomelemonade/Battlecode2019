@@ -192,17 +192,21 @@ export class ChurchBot {
 		});
 		this.defendersAlive++; // TODO: temporary
 		if (stop === undefined) {
-			// Dijkstras did not find a valid prophet location
-			// Send towards randomEnemyCastlePosition
-			var dijkstras2 = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
-			var stop2 = dijkstras2.resolve((vector) => vector.equals(randomEnemyCastlePosition));
-			var traced = Util.trace(dijkstras2, stop2);
-			var offset = traced.subtract(castlePosition);
-			// Build the unit
-			this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
-			// Signal to prophet
-			this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
-			return true;
+			if (this.controller.fuel > 15000 || this.controller.me.turn > 700) {
+				// Dijkstras did not find a valid prophet location
+				// Send towards randomEnemyCastlePosition
+				var dijkstras2 = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
+				var stop2 = dijkstras2.resolve((vector) => vector.equals(randomEnemyCastlePosition));
+				if (stop2 !== undefined) {
+					var traced = Util.trace(dijkstras2, stop2);
+					var offset = traced.subtract(castlePosition);
+					// Build the unit
+					this.action = this.controller.buildUnit(SPECS.PROPHET, offset.x, offset.y);
+					// Signal to prophet
+					this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
+					return true;
+				}
+			}
 		} else {
 			var traced = Util.trace(dijkstras, stop);
 			var offset = traced.subtract(castlePosition);
@@ -212,6 +216,7 @@ export class ChurchBot {
 			this.controller.signal(Util.encodePosition(randomEnemyCastlePosition), offset.x * offset.x + offset.y * offset.y);
 			return true;
 		}
+		return false;
 	}
 	removeDeadRobots(robots) {
 		var counter = 0;
