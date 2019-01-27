@@ -16,6 +16,7 @@ var map;
 var validChurchLocation;
 var numResources;
 var resourceDistance;
+var karboniteDistance;
 var resolved;
 var potential;
 
@@ -33,6 +34,7 @@ export function resolve(c, localCastlePositions, localEnemyCastlePredictions, lo
 	validChurchLocation = new Array(map.length).fill().map(() => Array(map[0].length).fill(false));
 	numResources = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
 	resourceDistance = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
+	karboniteDistance = new Array(map.length).fill().map(() => Array(map[0].length).fill(UNEXPLORED));
 	initialized = true;
 	var resources = []
 	for (var i = 0; i < map.length; i++) {
@@ -103,21 +105,33 @@ export function findChurchLocation() {
 	var bestChurchLocation = undefined;
 	var bestNumResources = 0;
 	var bestResourceDistance = 0;
+	var bestKarboniteDistance = 0;
 	var smallBfs = new Bfs(controller.true_map, bigStop, totalMoves);
 	smallBfs.resolve(function(location) { // Stop Condition
 		resolveLocation(location);
 		// Count the number of resources within responsible distance
 		var currentNumResources = numResources[location.x][location.y];
 		var currentResourceDistance = resourceDistance[location.x][location.y];
+		var currentKarboniteDistance = karboniteDistance[location.x][location.y];
 		// Compare with bestChurchLocation
+		// most numResources, tiebreaker with least resourceDistance, tiebreaker with least karboniteDistance
 		if (currentNumResources > bestNumResources) {
 			bestChurchLocation = location;
 			bestNumResources = currentNumResources;
 			bestResourceDistance = currentResourceDistance;
-		} else if (currentNumResources === bestNumResources && currentResourceDistance < bestResourceDistance) {
-			bestChurchLocation = location;
-			bestNumResources = currentNumResources;
-			bestResourceDistance = currentResourceDistance;
+			bestKarboniteDistance = currentKarboniteDistance;
+		} else if (currentNumResources === bestNumResources) {
+			if (currentResourceDistance < bestResourceDistance) {
+				bestChurchLocation = location;
+				bestNumResources = currentNumResources;
+				bestResourceDistance = currentResourceDistance;
+				bestKarboniteDistance = currentKarboniteDistance;
+			} else if (currentResourceDistance === bestResourceDistance && currentKarboniteDistance < bestKarboniteDistance) {
+				bestChurchLocation = location;
+				bestNumResources = currentNumResources;
+				bestResourceDistance = currentResourceDistance;
+				bestKarboniteDistance = currentKarboniteDistance;
+			}
 		}
 		return false; // Never stop until exhausted all unignored tiles
 	}, function(location) { // Ignore Condition
@@ -154,11 +168,17 @@ function getChurchLocationInfo(location) {
 	var bfs = new Bfs(controller.true_map, start, totalMoves);
 	var currentNumResources = 0;
 	var currentResourceDistance = 0;
+	var currentKarboniteDistance = 0;
 	bfs.resolve(function(position) { // Stop condition
 		// Stop condition is guaranteed to be evaluated only once per square
-		if (Util.hasResource(position)) {
+		if (Util.hasFuel(position)) {
 			currentNumResources++;
 			currentResourceDistance += location.getDistanceSquared(position);
+		} else if (Util.hasKarbonite(position)) {
+			currentNumResources++;
+			var tempDist = location.getDistanceSquared(position);
+			currentResourceDistance += tempDist;
+			currentKarboniteDistance += tempDist;
 		}
 		return false; // Never trigger the stop condition
 	}, function(position) { // Ignore condition
@@ -171,4 +191,5 @@ function getChurchLocationInfo(location) {
 	validChurchLocation[location.x][location.y] = true;
 	numResources[location.x][location.y] = currentNumResources;
 	resourceDistance[location.x][location.y] = currentResourceDistance;
+	karboniteDistance[location.x][location.y] = currentKarboniteDistance;
 }
