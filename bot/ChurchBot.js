@@ -295,7 +295,7 @@ export class ChurchBot {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {
-					if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 12) + 1, 400, 800)) {
+					if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 16) + 1, 400, 800)) {
 						this.spawnLatticeProphet();
 					}
 				}

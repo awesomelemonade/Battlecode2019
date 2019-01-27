@@ -4,6 +4,7 @@ import {Vector, totalMoves, totalMoveCosts} from './Library';
 import {Dijkstras} from './Dijkstras'
 import {Bfs} from './Bfs'
 import * as ChurchLocationFinder from './ChurchLocationFinder'
+import * as UnitsTracker from './UnitsTracker'
 
 // Castles & Churches must not have overlapping responsible tiles
 const responsibleDistanceRadius = 2;
@@ -50,6 +51,7 @@ export class CastleBot {
 		this.squadInfo = {};
 		this.signalQueue = [];
 		this.signalled = false;
+		this.deadProphetsOutsideVisionRange = 0; // Counts dead prophets outside vision range using UnitsTracker.js
 		// Church variables (Castle = church + extra)
 		this.resourceOrder = [];
 		this.progress = 0;
@@ -352,6 +354,8 @@ export class CastleBot {
 		var self = this;
 		this.action = undefined;
 		this.signalled = false;
+		// Units Tracker
+		this.deadProphetsOutsideVisionRange += UnitsTracker.track(this.controller);
 		// Retrieval id system
 		if (this.retrieveIndex !== -1) {
 			// Find unit
@@ -483,13 +487,13 @@ export class CastleBot {
 								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
 									// No more church locations - reserve karbonite/fuel for defending
-									
+									if (this.deadProphetsOutsideVisionRange >= 10 && this.isAffordable(SPECS.CRUSADER, 1, 200, 500)) {
+										this.spawnCrusaders();
+									}
 									// Scale it up + 25 per prophet in range starting at 200 up to 800
-									if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 20) + 1, 200, 500)) {
+									if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 24) + 1, 200, 500)) {
 										this.spawnLatticeProphet();
 									}
-									// TODO: when to spawn crusader?
-									// this.spawnCrusader();
 									this.churchesBuilt = true;
 								} else {
 									if (churchLocation !== null) {
