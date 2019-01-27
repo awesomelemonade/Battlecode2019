@@ -1,6 +1,7 @@
 import {SPECS} from 'battlecode'
 import * as Util from './Util';
 import {Dijkstras} from './Dijkstras'
+import {Bfs} from './Bfs'
 import {Vector, totalMoves, totalMoveCosts} from './Library';
 
 export class ProphetBot {
@@ -22,13 +23,13 @@ export class ProphetBot {
 	}
 	getMoveForTarget() {
 		var prophetPosition = Vector.ofRobotPosition(this.controller.me);
-		var dijkstras = new Dijkstras(this.controller.map, prophetPosition, totalMoves, totalMoveCosts);
-		var stop = dijkstras.resolve((location) => location.equals(this.target));
+		var bfs = new Bfs(this.controller.map, prophetPosition, totalMoves);
+		var stop = bfs.resolve((location) => location.equals(this.target), Util.isNextToCastleOrChurch);
 		if (stop === undefined) {
 			// Cannot reach
 			return undefined;
 		} else {
-			var move = Util.getMove(dijkstras, prophetPosition, stop);
+			var move = Util.getMove(bfs, prophetPosition, stop);
 			if (!move.isZero()) {
 				return this.controller.move(move.x, move.y);
 			}
@@ -42,7 +43,8 @@ export class ProphetBot {
 			return (((self.turnOffset + self.controller.me.turn) < 750) ? ((location.x + location.y) % 2 === 0) : ((location.x + location.y) % 2 === 0 || location.y % 2 === 0)) 
 					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
 		}, function(location) { // Ignore Condition
-			return self.controller.robot_map[location.x][location.y] === -1; // Ignore tiles outside of our vision range
+			// Ignore tiles outside vision range or tiles next to castle or church
+			return self.controller.robot_map[location.x][location.y] === -1 || Util.isNextToCastleOrChurch(location);
 		});
 		if (stop === undefined) {
 			// No visible valid stop areas

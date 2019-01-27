@@ -166,7 +166,12 @@ export class ChurchBot {
 			x = Math.floor(Math.random() * this.controller.map.length);
 			y = Math.floor(Math.random() * this.controller.map[0].length);
 		}
-		return new Vector(x, y);
+		var v = new Vector(x, y);
+		if (Util.isNextToCastleOrChurch(v)) {
+			return this.randomPassableVector();
+		} else {
+			return v;
+		}
 	}
 	spawnLatticeProphet() {
 		// Check costs of prophet
