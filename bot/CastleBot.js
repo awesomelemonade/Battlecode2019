@@ -355,7 +355,23 @@ export class CastleBot {
 		this.action = undefined;
 		this.signalled = false;
 		// Units Tracker
-		this.deadProphetsOutsideVisionRange += UnitsTracker.track(this.controller);
+		this.deadProphetsOutsideVisionRange += UnitsTracker.track(this.controller, function(id, position) {
+			// lol this is such an ugly hack
+			self.controller.log("Received that Castle " + id + position + " has died");
+			// Find castlePosition
+			var index = -1;
+			for (var i = 0; i < self.castlePositions.length; i++) {
+				if (self.castlePositions[i].equals(position)) {
+					index = i;
+					break;
+				}
+			}
+			if (index === -1) {
+				self.controller.log("huh? cannot find in castlePositions: " + self.castlePositions);
+			} else {
+				self.castlePositions.splice(index, 1);
+			}
+		});
 		// Retrieval id system
 		if (this.retrieveIndex !== -1) {
 			// Find unit
@@ -386,6 +402,7 @@ export class CastleBot {
 						this.xBuffers[robots[i].id] = value;
 					} else if (robots[i].turn === 2) {
 						var newCastlePosition = new Vector(this.xBuffers[robots[i].id], value);
+						UnitsTracker.setKnownInfo(robots[i].id, SPECS.CASTLE, newCastlePosition);
 						this.addCastlePosition(newCastlePosition);
 						this.xBuffers[robots[i].id] = undefined;
 					} else {
@@ -433,7 +450,6 @@ export class CastleBot {
 								var signal = this.squadInfo[robots[i].id];
 								var x = (signal >>> 6) & 0b111111;
 								var y = signal & 0b111111;
-								this.controller.log("Received that enemy castle[" + x + ", " + y + "] was killed - signal=" + signal);
 								// Search in enemyCastlePredictions
 								var index = -1;
 								for (var j = 0; j < this.enemyCastlePredictions.length; j++) {
@@ -486,13 +502,17 @@ export class CastleBot {
 							} else {
 								var churchLocation = this.churchesBuilt ? undefined : this.findChurchLocation();
 								if (churchLocation === undefined) {
+									// count prophets
+									var prophetCount = this.countOurProphetsInVision();
 									// No more church locations - reserve karbonite/fuel for defending
-									if (this.deadProphetsOutsideVisionRange >= 10 && this.isAffordable(SPECS.CRUSADER, 1, 200, 500)) {
-										this.spawnCrusaders();
-									}
-									// Scale it up + 25 per prophet in range starting at 200 up to 800
-									if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 24) + 1, 200, 500)) {
-										this.spawnLatticeProphet();
+									if ((this.deadProphetsOutsideVisionRange >= 10 && this.isAffordable(SPECS.CRUSADER, 1, 200, 500) && this.controller.me.turn < 750) || 
+											(this.castlePositions.length < this.enemyCastlePredictions.length && prophetCount >= 12)) {
+										this.spawnCrusader();
+									} else {
+										// Scale it up + 25 per prophet in range starting at 200 up to 800
+										if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(prophetCount, 24) + 1, 200, 500)) {
+											this.spawnLatticeProphet();
+										}
 									}
 									this.churchesBuilt = true;
 								} else {
@@ -569,8 +589,7 @@ export class CastleBot {
 	addEnemyPrediction(position) {
 		if (this.controller.isHorizontallySymmetric) {
 			this.enemyCastlePredictions.push(Util.flipPositionForHorizontallySymmetric(position));
-		}
-		if (this.controller.isVerticallySymmetric) {
+		} else if (this.controller.isVerticallySymmetric) {
 			this.enemyCastlePredictions.push(Util.flipPositionForVerticallySymmetric(position));
 		}
 	}

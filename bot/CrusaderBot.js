@@ -222,10 +222,13 @@ export class CrusaderBot {
 			if (this.controller.isRadioing(robot)) {
 				var robotId = robot.id;
 				if (this.controller.castles[robotId] !== undefined) {
-					// We found a signal from the castle
-					// Parse signal
-					this.target = Util.decodePosition(robot.signal);
-					this.controller.log("Received signal from castle: " + this.target + " - " + robot.signal_radius);
+					// Filter out small signals
+					if (robot.signal_radius > 50) {
+						// We found a signal from the castle
+						// Parse signal
+						this.target = Util.decodePosition(robot.signal);
+						this.controller.log("Received signal from castle: " + this.target + " - " + robot.signal_radius);
+					}
 				}
 			}
 		}
