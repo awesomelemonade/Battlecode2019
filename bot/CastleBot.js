@@ -169,7 +169,7 @@ export class CastleBot {
 		// Build the unit
 		this.action = this.controller.buildUnit(SPECS.PILGRIM, offset.x, offset.y);
 		// Signal to pilgrim the target church location - TODO: PilgrimBot has to differentiate building church and harvesting
-		this.controller.signal((Util.encodePosition(churchLocation) << 1) + 1, offset.x * offset.x + offset.y * offset.y);
+		this.controller.signal((Util.encodePosition(churchLocation) << 1) | 0b1, offset.x * offset.x + offset.y * offset.y);
 		this.signalled = true;
 		// Add to castle talk queue
 		this.buildingChurchCastleTalkQueue.push(churchLocation.x);
@@ -200,7 +200,7 @@ export class CastleBot {
 		var start = Util.getAdjacentPassable(castlePosition);
 		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(function(location) { // Stop Condition
-			return (((self.controller.me.turn) < 750) ? ((location.x + location.y) % 2 === 0) : ((location.x + location.y) % 2 === 0 || location.y % 2 === 0)) 
+			return (((location.x + location.y) % 2) === 0) 
 					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
 		}, function(location) { // Ignore Condition
 			return location.getDistanceSquared(castlePosition) > 81; // 81 = prophet range + 1 tile out (adjacent spawning)
@@ -257,7 +257,26 @@ export class CastleBot {
 			// Build the unit
 			this.action = this.controller.buildUnit(SPECS.CRUSADER, offset.x, offset.y);
 			// Signal to crusader
-			this.controller.signal(Util.encodePosition(stop), offset.x * offset.x + offset.y * offset.y);
+			this.controller.signal(Util.encodePosition(stop) << 1, offset.x * offset.x + offset.y * offset.y);
+			this.signalled = true;
+			return true;
+		}
+	}
+	spawnCrusaderForUnitHealth() {
+		// Check costs of crusader
+		if (!Util.isAffordable(SPECS.CRUSADER)) {
+			return false;
+		}
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var x = Util.getAdjacentPassable(castlePosition);
+		if (x.length > 0) {
+			var randomEnemyCastlePosition = this.enemyCastlePredictions[Math.floor(Math.random() * this.enemyCastlePredictions.length)];
+			var rand = x[Math.floor(Math.random() * x.length)];
+			var offset = rand.subtract(castlePosition);
+			// Build the unit
+			this.action = this.controller.buildUnit(SPECS.CRUSADER, offset.x, offset.y);
+			// Signal to crusader
+			this.controller.signal((Util.encodePosition(randomEnemyCastlePosition) << 1) | 0b1, offset.x * offset.x + offset.y * offset.y);
 			this.signalled = true;
 			return true;
 		}
@@ -517,7 +536,9 @@ export class CastleBot {
 									// count prophets
 									var prophetCount = this.countOurProphetsInVision();
 									// No more church locations - reserve karbonite/fuel for defending
-									if ((this.deadProphetsOutsideVisionRange >= 10 && this.isAffordable(SPECS.CRUSADER, 1, 200, 500) && this.controller.me.turn < 750) || 
+									if (this.controller.me.turn > 700) {
+										this.spawnCrusaderForUnitHealth();
+									} else if ((this.deadProphetsOutsideVisionRange >= 10 && this.isAffordable(SPECS.CRUSADER, 1, 200, 500) && this.controller.me.turn < 750) || 
 											(this.castlePositions.length < this.enemyCastlePredictions.length && prophetCount >= 12)) {
 										this.spawnCrusader();
 									} else {

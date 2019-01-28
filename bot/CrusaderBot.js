@@ -31,7 +31,8 @@ export class CrusaderBot {
 		if (castleSignal === -1) {
 			this.controller.log("Unable to find castle signal? " + Vector.ofRobotPosition(this.controller.me) + " - " + this.controller.me.turn);
 		} else {
-			this.target = Util.decodePosition(castleSignal);
+			this.isLatticing = (castleSignal & 1) === 1;
+			this.target = Util.decodePosition(castleSignal >>> 1);
 			this.controller.log("Crusader" + Vector.ofRobotPosition(this.controller.me) + " -> " + this.target);
 		}
 		this.isRushing = false; // if true, rush towards target
@@ -63,6 +64,28 @@ export class CrusaderBot {
 			route.unshift(location); // route would be backwards if you push()
 		}
 		return route;
+	}
+	getMoveForLattice() {
+		var self = this;
+		var prophetPosition = Vector.ofRobotPosition(this.controller.me);
+		var bfs = new Bfs(this.controller.map, prophetPosition, totalMoves, totalMoveCosts);
+		var stop = bfs.resolve(function(location) { // Stop Condition
+			return (((location.x + location.y) % 2) === 0 || location.y % 2 === 0)
+					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
+		}, function(location) { // Ignore Condition
+			// Ignore tiles outside vision range or tiles next to castle or church
+			return self.controller.robot_map[location.x][location.y] === -1 || Util.isNextToCastleOrChurch(location);
+		});
+		if (stop === undefined) {
+			// No visible valid stop areas
+			// Go towards target to search for more stop areas
+			return this.getMoveForTarget();
+		} else {
+			var move = Util.getMove(bfs, prophetPosition, stop);
+			if (!move.isZero()) {
+				return this.controller.move(move.x, move.y);
+			}
+		}
 	}
 	getAttackMove() {
 		return Util.getAttackMove();
@@ -291,6 +314,9 @@ export class CrusaderBot {
 			}
 		}
 		// Don't see enemy
+		if (this.isLatticing) {
+			return this.getMoveForLattice();
+		}
 		if (this.isRushing) {
 			return this.getMoveForTarget();
 		}

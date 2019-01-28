@@ -40,7 +40,7 @@ export class ProphetBot {
 		var prophetPosition = Vector.ofRobotPosition(this.controller.me);
 		var dijkstras = new Dijkstras(this.controller.map, prophetPosition, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(function(location) { // Stop Condition
-			return (((self.turnOffset + self.controller.me.turn) < 750) ? ((location.x + location.y) % 2 === 0) : ((location.x + location.y) % 2 === 0 || location.y % 2 === 0)) 
+			return (((location.x + location.y) % 2) === 0) 
 					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
 		}, function(location) { // Ignore Condition
 			// Ignore tiles outside vision range or tiles next to castle or church

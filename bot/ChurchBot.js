@@ -185,7 +185,7 @@ export class ChurchBot {
 		var start = Util.getAdjacentPassable(castlePosition);
 		var dijkstras = new Dijkstras(this.controller.map, start, totalMoves, totalMoveCosts);
 		var stop = dijkstras.resolve(function(location) { // Stop Condition
-			return (((self.controller.me.turn) < 700) ? ((location.x + location.y) % 2 === 0) : ((location.x + location.y) % 2 === 0 || location.y % 2 === 0)) 
+			return (((location.x + location.y) % 2) === 0) 
 					&& (!Util.isNextToCastleOrChurch(location)) && (!Util.hasResource(location));
 		}, function(location) { // Ignore Condition
 			return location.getDistanceSquared(castlePosition) > 81; // 81 = prophet range + 1 tile out (adjacent spawning)
@@ -280,6 +280,24 @@ export class ChurchBot {
 		}
 		return count;
 	}
+	spawnCrusaderForUnitHealth() {
+		// Check costs of crusader
+		if (!Util.isAffordable(SPECS.CRUSADER)) {
+			return false;
+		}
+		var castlePosition = Vector.ofRobotPosition(this.controller.me);
+		var x = Util.getAdjacentPassable(castlePosition);
+		if (x.length > 0) {
+			var rand = x[Math.floor(Math.random() * x.length)];
+			var offset = rand.subtract(castlePosition);
+			// Build the unit
+			this.action = this.controller.buildUnit(SPECS.CRUSADER, offset.x, offset.y);
+			// Signal to crusader
+			this.controller.signal((Util.encodePosition(this.randomPassableVector()) << 1) | 0b1, offset.x * offset.x + offset.y * offset.y);
+			this.signalled = true;
+			return true;
+		}
+	}
 	turn() {
 		var self = this;
 		this.action = undefined;
@@ -305,7 +323,9 @@ export class ChurchBot {
 				this.spawnLatticeProphet();
 			} else {
 				if (!this.spawnPilgrimForHarvesting()) {
-					if (this.controller.me.turn > 700 || this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 16) + 1, 400, 800)) {
+					if (this.controller.me.turn > 700) {
+						this.spawnCrusaderForUnitHealth();
+					} else if (this.isAffordable(SPECS.PROPHET, Math.min(this.countOurProphetsInVision(), 16) + 1, 400, 800)) {
 						this.spawnLatticeProphet();
 					}
 				}
