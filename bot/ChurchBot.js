@@ -263,8 +263,8 @@ export class ChurchBot {
 		return ourScore < enemyScore * 4;
 	}
 	isAffordable(unitType, num = 1, bufferKarbonite = 0, bufferFuel = 0) {
-		return this.controller.karbonite >= SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE * num + bufferKarbonite &&
-						this.controller.fuel >= SPECS.UNITS[unitType].CONSTRUCTION_FUEL * num + bufferFuel;
+		return this.controller.karbonite >= SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE * ((num + 1) / 2) + bufferKarbonite &&
+						this.controller.fuel >= SPECS.UNITS[unitType].CONSTRUCTION_FUEL * ((num + 1) / 2) + bufferFuel;
 	}
 	countOurProphetsInVision() {
 		var count = 0;

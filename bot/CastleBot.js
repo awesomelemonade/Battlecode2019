@@ -318,10 +318,10 @@ export class CastleBot {
 		return numLower < Math.min(this.controller.karbonite / 10, this.controller.fuel / 50);
 	}
 	isAffordable(unitType, num = 1, bufferKarbonite = 0, bufferFuel = 0) {
-		return this.controller.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * this.numChurchesBuilding +
-						SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE * num + bufferKarbonite &&
-				this.controller.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * this.numChurchesBuilding + 
-						SPECS.UNITS[unitType].CONSTRUCTION_FUEL * num + bufferFuel;
+		return this.controller.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE * Math.min(this.numChurchesBuilding, 2) +
+						SPECS.UNITS[unitType].CONSTRUCTION_KARBONITE * ((num + 1) / 2) + bufferKarbonite &&
+				this.controller.fuel >= (SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL * Math.min(this.numChurchesBuilding, 2) + 
+						SPECS.UNITS[unitType].CONSTRUCTION_FUEL * ((num + 1) / 2) + bufferFuel);
 	}
 	shouldDefend() {
 		var ourScore = 0;
