@@ -1,6 +1,6 @@
 # 2950 lines of Javascript AI - An MIT Battlecode 2019 Writeup
 
-### Intro - Why did I write this?
+### Introduction - Why did I write this?
 
 It's that time of the year again! A month-long constant grind to achieve the invaluable experience of travelling to MIT and glorious fame of (owait there is prize money too ;o). For the past few years, I have participated in Battlecode, but I had never written any sort of writeup. It was only until Cixelyn (Cory Li, MIT 2012, @Cixelyn), a previous winner of battlecode (and also wrote a fascinating post mortem link here), protested that we should write more post mortems.
 
@@ -14,9 +14,9 @@ Quite frankly, I simply did not have anything interesting to write about in prev
 
 Coming into my third year of MIT Battlecode, I was motivated to make this year our best performance yet. One of my current philosophy in these competitions is to always strive for #1. Decisions should be made with the goal of reaching first place instead of the "I should cut my losses" mindset. In addition, it is important for me to pursue long term learning goals that pertain to the real world. As a high school student, I realized that it is not a time for me to make products or start a company and save the world from global warming or achieve world peace at this age. After all, there are over 7 billion people in the world and a great majority have more experience than I do. Certainly there are a significant number of people that are smarter in many areas than I am, so how would I be able to solve worldly problems as a measly high school student? Therefore, I sought to focus on education and learning tools and ideas that can prepare me to solve these problems for the future.
 
-I was preparing myself for the four-week grind over MIT's Independent Activities Period long before it actually started. One thing that I heard about was from last year's #1 team Orbitary Graph (Side note: I also talked to Standard Technology during the finals, and they also considered using something similar based off an open source project a previous battlecoder (bovard) had created: https://github.com/bovard/archon)). Orbitary Graph had a "battlestation" where they could have bots play other versions of their bots automagically. Rule based (handcoded non-machine-learning) bots often have many "magic values" used for heuristics. Having this battlestation can produce fast, convenient, and reliable results to assist in creating a more fluid feedback loop to help change constants. Unfortunately, even if I knew about bovard's archon project beforehand, it would not have been easily adaptable to the new Javascript stack used in Battlecode 2019.
+I was preparing myself for the four-week grind over MIT's Independent Activities Period long before it actually started. One thing that I heard about was from last year's #1 team Orbitary Graph (Side note: I also talked to Standard Technology during the finals, and they also considered using something similar based off an open source project a previous battlecoder (bovard) had created: https://github.com/bovard/archon). Orbitary Graph had a "battlestation" where they could have bots play other versions of their bots automagically. Rule based (handcoded non-machine-learning) bots often have many "magic values" used for heuristics. Having this battlestation can produce fast, convenient, and reliable results to assist in creating a more fluid feedback loop to help change constants. Unfortunately, even if I knew about bovard's archon project beforehand, it would not have been easily adaptable to the new Javascript stack used in Battlecode 2019.
 
-This does not mean I did not try to create this battlestation. I had reasonable experience with backend tools - the key experience I lacked was creating a frontend. Therefore, I spent a few days in November/December musing over front-end frameworks such as ReactJS (Side tangent here: I actually got an introduction to ReactJS earlier at MIT's Splash program. I would highly recommend middle and high school students to explore MIT's ESP courses with a friend or two for fun). While exploring front-end, I started to wonder what frameworks other simple websites used. What better website than Battlecode itself?
+This does not mean I did not try to create this battlestation. I had reasonable experience with backend tools - the key experience I lacked was creating a frontend. Therefore, I spent a few days in November/December musing over front-end frameworks such as ReactJS (Side tangent here: I actually got an introduction to ReactJS earlier at [MIT's Splash](TODO_LINK) program. I would highly recommend middle and high school students to explore MIT's ESP courses with a friend or two for fun). While exploring front-end, I started to wonder what frontend frameworks other simple websites used. What better website than Battlecode itself?
 	
 That's when I started scrolling through the source of the website. It was then I stumbled across a particularly interesting comment:
 
@@ -35,8 +35,59 @@ Anyways, when the competition rolled around, in turns out it was not any sort of
 
 ### Sprint Tournament - Initial Infrastructure
 
+Armed with our experience from previous years, we knew that we could not compete against other people in theorycrafting based off the specs. Therefore, we took an approach similar to what we learned from last year: Building infrastructure. Thankfully, we did not have to go to the extent of wrapping their entire API before starting our actual strategies.
+
+Our first big infrastructural decision was deciding what language to use. Battlecode 2019's engine is based off Javascript and transpilation into Javascript. Although none of our team members had any sort of experience with building a large project in Javascript, we decided we did not want to deal with the disadvantages of using transpiled Java or Python:
+
+* Debugging would be a pain - One would have to read transpiled Javascript
+    * Eventually, we did figure out line numbers do correspond with compiled_bot.js, which was very useful because the compiled version closely matched when using pure javascript.
+* Not something we could foresee, but jsweet's transpiler online service went down in the middle of the competition.
+* I wanted to learn javascript anyways
+
+Otherwise, there are two other notable pieces of infrastructure we built during our first week.
+
+* WrappedController - robot_map, true_map, map
+    * Original purpose of keeping track of castles and churches for deposit locations of pilgrims
+    * Treated a unit staying in the same location for 2 turns as "impassable terrain"
+    * Transposing (because y, x is confusing for me :S)
+        * It was so confusing - had a very confusing bug where it seemed like one of the maps was transposed
+            * Turns out we were transposing every turn because the maps do not get reset every turn (they do not change from the start)
+* [Dijkstras](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) (and soon after [BFS](https://en.wikipedia.org/wiki/Breadth-first_search)) - stopCondition (and soon after ignoreCondition)
+    * PriorityQueue implementation (Heap)
+        * Used Binary Heap
+    * We did not time out because most, if not all, stopped searching early when they found what they wanted
+        * Includes finding church location
+        * Finding path towards enemy castle
+        * Finding path to and from resources
+
+### Sprint Tournament - Strategy & Macro Game
+
+Castle Centralization
+
+* Everything is centralized on one castle (referred to as the "leader castle")
+* Pilgrims are assigned to resource tiles by the leader castle
+* Defenders (which are only prophets at this stage) are assigned to resource tiles by the leader castle
+
+[TODO]
+
+Communication System
+
+The only free communication was the castle talk - and it could only go one way. Using only castle talk would be virtually impossible to coordinate units and create a (unless you use a substantial amount of emergent behavior)
+
+Unfortunately, transmitting long distances takes a lot of fuel (equals r^2 costs)
+However, a short transmission with an r^2 distance of two or lower, 
+
+### Sprint Tournament - Reflection - Why did we scrap this plan?
+
+[TODO]
+
+### Seeding/Qualifiers/Finals Strategy
+
+[TODO]
+
 ### Conclusion
 
+[TODO]
 
 ```
 Final line count:
