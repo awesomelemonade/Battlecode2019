@@ -16,7 +16,8 @@ Coming into my third year of MIT Battlecode, I was motivated to make this year o
 
 I was preparing myself for the four-week grind over MIT's Independent Activities Period long before it actually started. One thing that I heard about was from last year's #1 team Orbitary Graph (Side note: I also talked to Standard Technology during the finals, and they also considered using something similar based off an open source project a previous battlecoder (bovard) had created: https://github.com/bovard/archon). Orbitary Graph had a "battlestation" where they could have bots play other versions of their bots automagically. Rule based (handcoded non-machine-learning) bots often have many "magic values" used for heuristics. Having this battlestation can produce fast, convenient, and reliable results to assist in creating a more fluid feedback loop to help change constants. Unfortunately, even if I knew about bovard's archon project beforehand, it would not have been easily adaptable to the new Javascript stack used in Battlecode 2019.
 
-This does not mean I did not try to create this battlestation. I had reasonable experience with backend tools - the key experience I lacked was creating a frontend. Therefore, I spent a few days in November/December musing over front-end frameworks such as ReactJS (Side tangent here: I actually got an introduction to ReactJS earlier at [MIT's Splash](TODO_LINK) program. I would highly recommend middle and high school students to explore MIT's ESP courses with a friend or two for fun). While exploring front-end, I started to wonder what frontend frameworks other simple websites used. What better website than Battlecode itself?
+
+While I never got around to finish creating this battlestation, it did not stop me from trying. In fact, I wanted to create this "Bot Arena" since Halite III, with the idea of implementing a trueskill leaderboard that mirrors Halite's leaderboard. (Side note: In retrospect, a trueskill leaderboard would never have been efficient in Battlecode 2019 due to the amount of computation power it takes to run one game.) With familiarity with Java, Python and similar languages, I had reasonable experience with backend tools - the key experience I lacked was creating a frontend. Therefore, I spent a few days in November/December musing over front-end frameworks such as ReactJS (Side tangent here: I actually got an introduction to ReactJS earlier at [MIT's ESP](https://esp.mit.edu/learn/index.html) program. I would highly recommend middle and high school students to explore MIT's ESP courses with a friend or two for fun). While exploring front-end, I started to wonder what frontend frameworks other simple websites used. What better website than Battlecode itself?
 	
 That's when I started scrolling through the source of the website. It was then I stumbled across a particularly interesting comment:
 
@@ -26,12 +27,7 @@ That's when I started scrolling through the source of the website. It was then I
 Battlecode was going to be an first person shooter o.0
 
 (By the way, the website uses Angular)
-Anyways, when the competition rolled around, in turns out it was not any sort of first person shooter. So whatever dev that left that comment trolled us.
-
-
-[Editing in progress...]
-
-[TODO] I even wanted to implement trueskill similar to Halite's leaderboard. (In fact, I wanted to create this "BotArena [link to github]" since halite. However, these are huge ambitions that require a tremendous amount of time that I simply could not afford. [College apps]
+Anyways, when the competition rolled around, in turns out it was not any sort of first person shooter. So whatever dev that left that comment trolled us. As for the battlestation, due to the college application process, I never got around to finishing the battlestation.
 
 ### Sprint Tournament - Initial Infrastructure
 
