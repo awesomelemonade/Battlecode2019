@@ -1,5 +1,10 @@
 # 2950 lines of Javascript AI - An MIT Battlecode 2019 Writeup
 
+2019: CitricSky - 3rd place (Finalists)
+2018: CitricSky - Top 16 (Finalists)
+2017: ANinjaz - Top 48/64
+<sub><sup>All placings concern the main bracket (and not the high school bracket)</sup></sub>
+
 ### Introduction - Why did I write this?
 
 It's that time of the year again! A month-long constant grind to achieve the invaluable experience of travelling to MIT and glorious fame of (owait there is prize money too ;o). For the past few years, I have participated in Battlecode, but I had never written any sort of writeup. It was only until Cixelyn (Cory Li, MIT 2012, @Cixelyn), a previous winner of battlecode (and also wrote a fascinating post mortem link here), protested that we should write more post mortems.
@@ -56,6 +61,8 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
         * Finding path towards enemy castle
         * Finding path to and from resources
 
+[Editing in Progress]
+
 ### Sprint Tournament - Strategy & Macro Game
 
 Castle Centralization
@@ -68,16 +75,37 @@ Castle Centralization
 
 Communication System
 
-The only free communication was the castle talk - and it could only go one way. Using only castle talk would be virtually impossible to coordinate units and create a (unless you use a substantial amount of emergent behavior)
+Battlecode 2019's communication was particularly restrictive. One has to note that the only free communication was "castle talk." This castlThe only free communication was the castle talk - and it could only go one way. Using only castle talk would be virtually impossible to coordinate units and create a (unless you use a substantial amount of emergent behavior)
 
-Unfortunately, transmitting long distances takes a lot of fuel (equals r^2 costs)
-However, a short transmission with an r^2 distance of two or lower, 
+However, to coordinate more units, we need to figure out some form of two way communication. This requirement leads to the only other form of communication: signalling. Unfortunately, transmitting over long distances takes a tremendous amount of fuel (proportional to r^2 where r is the distance). However, we quickly realized that a short transmission to an adjacent tile (r = 1, r = 2) would only require a maximum of 4 fuel. We took advantage of this by always sending a signal when we build a new unit. Due to build restrictions, new units are always adjacent to the unit that built them. With castle centralization, it is unnecessary to waste fuel to signal back, because we can easily queue up the free castle talks to communicate the other way.
 
-### Sprint Tournament - Reflection - Why did we scrap this plan?
+### Sprint Tournament - Reflection - Why did we scrap (majorify of) this plan?
 
 [TODO]
 
 ### Seeding/Qualifiers/Finals Strategy
+
+Lattice prophets
+
+Sparse vs Dense
+
+Distributing the lattice
+
+### Seeding Tournament - Castle Timeouts
+
+ChurchLocationFinder
+Prioritize those that are near the middle (?)
+
+### Seeding/Qualifiers
+
+### Seeding/Qualifiers/Finals Strategy - Communication (again)
+
+[TODO]
+
+Identification system
+
+One really only has to identify as a unit type once - then one can use a map that maps id to unit type
+Did not get around to implementing this for the qualifiers or finals
 
 [TODO]
 
