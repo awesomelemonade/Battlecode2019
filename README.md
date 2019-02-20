@@ -1,8 +1,11 @@
 # 2950 lines of Javascript AI - An MIT Battlecode 2019 Writeup
 
 2019: CitricSky - 3rd place (Finalists)
+
 2018: CitricSky - Top 16 (Finalists)
+
 2017: ANinjaz - Top 48/64
+
 <sub><sup>All placings concern the main bracket (and not the high school bracket)</sup></sub>
 
 ### Introduction - Why did I write this?
@@ -22,7 +25,7 @@ Coming into my third year of MIT Battlecode, I was motivated to make this year o
 I was preparing myself for the four-week grind over MIT's Independent Activities Period long before it actually started. One thing that I heard about was from last year's #1 team Orbitary Graph (Side note: I also talked to Standard Technology during the finals, and they also considered using something similar based off an open source project a previous battlecoder (bovard) had created: https://github.com/bovard/archon). Orbitary Graph had a "battlestation" where they could have bots play other versions of their bots automagically. Rule based (handcoded non-machine-learning) bots often have many "magic values" used for heuristics. Having this battlestation can produce fast, convenient, and reliable results to assist in creating a more fluid feedback loop to help change constants. Unfortunately, even if I knew about bovard's archon project beforehand, it would not have been easily adaptable to the new Javascript stack used in Battlecode 2019.
 
 
-While I never got around to finish creating this battlestation, it did not stop me from trying. In fact, I wanted to create this "Bot Arena" since Halite III, with the idea of implementing a trueskill leaderboard that mirrors Halite's leaderboard. (Side note: In retrospect, a trueskill leaderboard would never have been efficient in Battlecode 2019 due to the amount of computation power it takes to run one game.) With familiarity with Java, Python and similar languages, I had reasonable experience with backend tools - the key experience I lacked was creating a frontend. Therefore, I spent a few days in November/December musing over front-end frameworks such as ReactJS (Side tangent here: I actually got an introduction to ReactJS earlier at [MIT's ESP](https://esp.mit.edu/learn/index.html) program. I would highly recommend middle and high school students to explore MIT's ESP courses with a friend or two for fun). While exploring front-end, I started to wonder what frontend frameworks other simple websites used. What better website than Battlecode itself?
+While I never got around to finish creating this battlestation, it did not stop me from trying. In fact, I wanted to create this "Bot Arena" since Halite III, with the idea of implementing a trueskill leaderboard that mirrors Halite's leaderboard. (Side note: In retrospect, a trueskill leaderboard would never have been efficient in Battlecode 2019 due to the amount of computation power it takes to run one game.) With familiarity with Java, Python, and similar languages, I had reasonable experience with backend tools - the key experience I lacked was creating a frontend. Therefore, I spent a few days in November/December musing over front-end frameworks such as ReactJS (Side tangent here: I actually got an introduction to ReactJS earlier at [MIT's ESP](https://esp.mit.edu/learn/index.html) program. I would highly recommend middle and high school students to explore MIT's ESP courses with a friend or two for fun). While exploring front-end, I started to wonder what frontend frameworks other simple websites used. What better website than Battlecode itself?
 	
 That's when I started scrolling through the source of the website. It was then I stumbled across a particularly interesting comment:
 
