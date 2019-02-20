@@ -1,11 +1,8 @@
 # 2950 lines of Javascript AI - An MIT Battlecode 2019 Writeup
 
-2019: CitricSky - 3rd place (Finalists)
-
-2018: CitricSky - Top 16 (Finalists)
-
-2017: ANinjaz - Top 48/64
-
+2019: CitricSky - 3rd place (Finalists)\
+2018: CitricSky - Top 16 (Finalists)\
+2017: ANinjaz - Top 48/64\
 <sub><sup>All placings concern the main bracket (and not the high school bracket)</sup></sub>
 
 ### Introduction - Why did I write this?
