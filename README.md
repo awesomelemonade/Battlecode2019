@@ -13,7 +13,7 @@ It's that time of the year again! A month-long constant grind to achieve the inv
 
 ![Cixelyn2](writeup-images/Cixelyn2.png)
 
-Quite frankly, I simply did not have anything interesting to write about in previous years, and thus did not pursue any sort of writeup. However, this year, although we (spoilers) did not win, it certainly has been an adventurous journey in not only programming our bot, but also in socializing with the devs and other teams at the finals.
+Quite frankly, I simply did not have anything interesting to write about in previous years, and thus did not pursue any sort of writeup. However, this year, although we (spoilers) did not win, it certainly has been an adventurous journey in not only programming our bot, but also in socializing with the devs, sponsors, and other teams at the finals.
 
 ### Initial Preparation
 
@@ -108,6 +108,23 @@ One really only has to identify as a unit type once - then one can use a map tha
 Did not get around to implementing this for the qualifiers or finals
 
 [TODO]
+
+### Qualifiers
+
+Church Laser
+Crusader Endgame Spam
+
+### High School Bracket
+
+### Final tournament
+
+* Emergent Behavior
+
+https://www.twitch.tv/mitbattlecode/clip/IntelligentAnnoyingAsteriskKlappa
+
+* Our second matchup vs Justice Of The War
+
+https://www.twitch.tv/mitbattlecode/clip/GoldenFrozenAsparagusYee
 
 ### Conclusion
 
