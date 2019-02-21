@@ -50,6 +50,7 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
 * WrappedController - robot_map, true_map, map
     * Original purpose of keeping track of castles and churches for deposit locations of pilgrims
     * Treated a unit staying in the same location for 2 turns as "impassable terrain"
+        * Explained in the "Navigation" section
     * Transposing (because y, x is confusing for me :S)
         * It was so confusing - had a very confusing bug where it seemed like one of the maps was transposed
             * Turns out we were transposing every turn because the maps do not get reset every turn (they do not change from the start)
@@ -65,6 +66,10 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
 
 ### Sprint Tournament - Strategy & Macro Game
 
+Navigation
+
+As shown above, a primary piece of infrastructure we built were pathfinding algorithms, Dijkstras and BFS. However, these algorithms in its vanilla form have a difficult time dealing with moving "barriers" (which are actually just other units). If one just simply consider all of the other units as impassable terrain, 
+
 Castle Centralization
 
 * Everything is centralized on one castle (referred to as the "leader castle")
@@ -79,13 +84,35 @@ Battlecode 2019's communication was particularly restrictive. One has to note th
 
 However, to coordinate more units, we need to figure out some form of two way communication. This requirement leads to the only other form of communication: signalling. Unfortunately, transmitting over long distances takes a tremendous amount of fuel (proportional to r^2 where r is the distance). However, we quickly realized that a short transmission to an adjacent tile (r = 1, r = 2) would only require a maximum of 4 fuel. We took advantage of this by always sending a signal when we build a new unit. Due to build restrictions, new units are always adjacent to the unit that built them. With castle centralization, it is unnecessary to waste fuel to signal back, because we can easily queue up the free castle talks to communicate the other way.
 
-### Sprint Tournament - Reflection - Why did we scrap (majorify of) this plan?
+### Sprint Tournament - Reflection - Why did we scrap (majority of) this plan?
+
+What makes a good Battlecode bot?
 
 [TODO]
 
 ### Seeding/Qualifiers/Finals Strategy
 
+Defender's Advantage
+After they nerfed rushes by allowing castles to attack, everybody quickly realized that turtling has an inherent advantage due to the inability to move and attack all in one turn. Assuming that both the attacker and defender has the same attack range (which is often the case with prophets vs prophets), a unit has to step in the enemy's attack range in order to attack. The enemy then gets a free attack, causing one to lose the 1 vs 1 engagement. Therefore, in order to win micro, one has to either coordinate their attacker units so they have a local numbers advantage, or simply sit and defend to wait for enemies to walk in your vision radius.
+
 Lattice prophets
+
+Scrimming against other teams, someone came up with the idea of creating a lattice of units. Originally, a "lattice" was simply surrounding a pilgrim with 4 prophets on the subcardinal directions. The pilgrim is then still able to move about and deposit the resource it mined to churches and castles.
+
+
+The primary purpose of this lattice is to claim territory, and still allow other units to freely traverse wherever they want. Because units can move diagonally, one can create a checkerboard pattern:
+
+[Insert Image]
+
+People started referring this as the
+
+
+Because units can jump over other units this year (most units have move range to be r^2 = 4), a lattice
+
+Why prophets? Prophets have the highest attack range
+
+checkerboard pattern
+[Insert image]
 
 Sparse vs Dense
 
@@ -94,6 +121,9 @@ Distributing the lattice
 ### Seeding Tournament - Castle Timeouts
 
 ChurchLocationFinder
+
+One of the key concepts in this strategy is determining where and what order churches should be built. Due to the defenders strategy, combat units (prophets, crusaders, preachers) do not traverse to new areas to "explore"
+
 Prioritize those that are near the middle (?)
 
 ### Seeding/Qualifiers
