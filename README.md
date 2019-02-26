@@ -66,6 +66,10 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
 
 ### Sprint Tournament - Strategy & Macro Game
 
+Initial Inspection
+
+[Making use of the free give to create supply chains - never got viable due to high costs and buffed churches]
+
 Navigation
 
 As shown above, a primary piece of infrastructure we built were pathfinding algorithms, Dijkstras and BFS. However, these algorithms in its vanilla form have a difficult time dealing with moving "barriers" (which are actually just other units). If one just simply consider all of the other units as impassable terrain, 
@@ -142,7 +146,18 @@ Did not get around to implementing this for the qualifiers or finals
 ### Qualifiers
 
 Church Laser
+
+* Many teams realized they could abuse the turn queue. When one creates a unit, the unit get appended at the end of the turn queue. Theoretically, if one keeps building units in the same turn, they can traverse the map by creating units without enemy intervention. [TODO]
+
 Crusader Endgame Spam
+
+When the Crusader buff came out, we had an intuition that it wasn't enough to be viable. However, after reconsidering and careful analysis, we realized there were two main benefits that could potentially make them useful.
+
+* Prophets take more fuel to kill a crusader than it takes for crusaders to be built (40 fuel vs 15 fuel). This could be useful if we're in a stalemate
+
+* Crusaders have the highest karbonite to unit health ratio, making them the best unit to spam during the endgame when trying to be efficient with karbonite.
+
+[TODO]
 
 ### High School Bracket
 
@@ -155,6 +170,10 @@ https://www.twitch.tv/mitbattlecode/clip/IntelligentAnnoyingAsteriskKlappa
 * Our second matchup vs Justice Of The War
 
 https://www.twitch.tv/mitbattlecode/clip/GoldenFrozenAsparagusYee
+
+### Final Tournament - Ideas I heard I wish I could of implemented
+
+* Centralization of lattice structure onto castles. WhaleVomit (Lawrence Chen) on Knights of Cowmelot said they assigned prophets to lattice locations, so if they detect the prophet dies, they can avoid sending another prophet there. This would have conserved a lot of resources and prioritized claiming unclaimed land over fighting a stalemate prophet battle.
 
 ### Conclusion
 
