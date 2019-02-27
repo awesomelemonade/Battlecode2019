@@ -68,7 +68,7 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
 
 Initial Inspection
 
-[Making use of the free give to create supply chains - never got viable due to high costs and buffed churches]
+[TODO - Making use of the free give to create supply chains - never got viable due to high costs and buffed churches]
 
 Navigation
 
@@ -122,14 +122,6 @@ Sparse vs Dense
 
 Distributing the lattice
 
-### Seeding Tournament - Castle Timeouts
-
-ChurchLocationFinder
-
-One of the key concepts in this strategy is determining where and what order churches should be built. Due to the defenders strategy, combat units (prophets, crusaders, preachers) do not traverse to new areas to "explore"
-
-Prioritize those that are near the middle (?)
-
 ### Seeding/Qualifiers
 
 ### Seeding/Qualifiers/Finals Strategy - Communication (again)
@@ -142,6 +134,16 @@ One really only has to identify as a unit type once - then one can use a map tha
 Did not get around to implementing this for the qualifiers or finals
 
 [TODO]
+
+### Seeding Tournament - Castle Timeouts
+
+ChurchLocationFinder
+
+One of the key concepts in our strategy is determining where and what order churches should be built. Due to the defenders strategy, combat units (prophets, crusaders, preachers) do not traverse to new areas to "explore." Instead, we have a predefined order of church locations that we calculate at the beginning of the game.
+
+Scrimming vs Standard Technology, we realized they prioritized church locations that were near the middle before they occupied resources on their own side. Unfortunately, we did not get around to doing the same thing, as it would probably require some kind of arbitrary scoring system that did not seem to be worth our time.
+
+Once we reached the seeding tournament, we realized our bot kept doing unexplainable actions. After the tournament, we quickly scrambled to investigate what was going on - it turns out, although our Big O notation of ChurchLocationFinder was okay, it had a large constant, resulting in timeouts. Fortunately, with the new announcement of no edge cases in the map generator, we were comfortable with optimizing the constant factor (commits 6294a34 and 4326864). It was for this reason why we ended up with a terrible seed going into the qualifying tournament.
 
 ### Qualifiers
 
@@ -178,6 +180,8 @@ https://www.twitch.tv/mitbattlecode/clip/GoldenFrozenAsparagusYee
 ### Conclusion
 
 [TODO]
+
+Thank you to devs, sponsors, and everybody that made this competition possible!
 
 ```
 Final line count:
