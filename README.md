@@ -97,6 +97,7 @@ What makes a good Battlecode bot?
 ### Seeding/Qualifiers/Finals Strategy
 
 Defender's Advantage
+
 After they nerfed rushes by allowing castles to attack, everybody quickly realized that turtling has an inherent advantage due to the inability to move and attack all in one turn. Assuming that both the attacker and defender has the same attack range (which is often the case with prophets vs prophets), a unit has to step in the enemy's attack range in order to attack. The enemy then gets a free attack, causing one to lose the 1 vs 1 engagement. Therefore, in order to win micro, one has to either coordinate their attacker units so they have a local numbers advantage, or simply sit and defend to wait for enemies to walk in your vision radius.
 
 Lattice prophets
@@ -143,7 +144,7 @@ One of the key concepts in our strategy is determining where and what order chur
 
 Scrimming vs Standard Technology, we realized they prioritized church locations that were near the middle before they occupied resources on their own side. Unfortunately, we did not get around to doing the same thing, as it would probably require some kind of arbitrary scoring system that did not seem to be worth our time.
 
-Once we reached the seeding tournament, we realized our bot kept doing unexplainable actions. After the tournament, we quickly scrambled to investigate what was going on - it turns out, although our Big O notation of ChurchLocationFinder was okay, it had a large constant, resulting in timeouts. Fortunately, with the new announcement of no edge cases in the map generator, we were comfortable with optimizing the constant factor (commits 6294a34 and 4326864). It was for this reason why we ended up with a terrible seed going into the qualifying tournament.
+Once we reached the seeding tournament, we realized our bot kept doing unexplainable actions. After the tournament, we quickly scrambled to investigate what was going on - it turns out, although our Big O notation of ChurchLocationFinder was okay, it had a large constant, resulting in timeouts. Fortunately, with the new announcement of no edge cases in the map generator, we were comfortable with optimizing the constant factor (commits [6294a34](https://github.com/awesomelemonade/Battlecode2019/commit/6294a34a0c7126043b3bd9626fa213515560194c) and [4326864](https://github.com/awesomelemonade/Battlecode2019/commit/4326864ad071335b2c78a2036a96fe2096f032b8)). It was for this reason why we ended up with a terrible seed going into the qualifying tournament.
 
 ### Qualifiers
 
