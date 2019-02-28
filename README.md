@@ -1,5 +1,7 @@
 # 2950 lines of Javascript AI - An MIT Battlecode 2019 Writeup
 
+[Editing in Progress...]
+
 2019: CitricSky - 3rd place (Finalists)\
 2018: CitricSky - Top 16 (Finalists)\
 2017: ANinjaz - Top 48/64\
@@ -62,8 +64,6 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
         * Includes finding church locations (Pilgrims)
         * Finding path towards enemy castle (Combat Units)
         * Finding path to and from resources (Pilgrims)
-
-[Editing in Progress]
 
 ### Sprint Tournament - Strategy & Macro Game
 
@@ -177,7 +177,7 @@ https://www.twitch.tv/mitbattlecode/clip/GoldenFrozenAsparagusYee
 
 ### Final Tournament - Ideas I heard I wish I could of implemented
 
-* Centralization of lattice structure onto castles. WhaleVomit (Lawrence Chen) on Knights of Cowmelot said they assigned prophets to lattice locations, so if they detect the prophet dies, they can avoid sending another prophet there. This would have conserved a lot of resources and prioritized claiming unclaimed land over fighting a stalemate prophet battle.
+* Centralization of lattice structure onto castles: [WhaleVomit (Hi Lawrence!)](https://github.com/WhaleVomit) on Knights of Cowmelot said they assigned prophets to lattice locations, so if they detect the prophet dies, they can avoid sending another prophet there. This would have conserved a lot of resources and prioritized claiming unclaimed land over fighting a stalemate prophet battle.
 
 ### Conclusion
 
