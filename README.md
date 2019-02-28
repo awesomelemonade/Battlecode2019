@@ -69,9 +69,7 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
 
 Initial Inspection
 
-When we read the specs, our initial impression was that the team that made use of give() the best would have a resource advantage, and thus win the long game. One could chain many units from the castle to each of the resources, as if it was some sort of [min-cost flow problem](https://en.wikipedia.org/wiki/Minimum-cost_flow_problem).
-
-[TODO - Making use of the free give to create supply chains - never got viable due to high costs and buffed churches]
+When we read the specs, our initial impression was that the team that made use of give() the best would have a resource advantage, and thus win the long game. This was because give() was the only free (0 fuel cost) way of transporting resources. One could chain many units from the castle to each of the resources, as if it was some sort of [min-cost flow problem](https://en.wikipedia.org/wiki/Minimum-cost_flow_problem). However, not only would this require an extensive infrastructure of code, it also never got viable due to the large initial costs, especially after the buffed churches.
 
 Navigation
 
