@@ -32,6 +32,7 @@ That's when I started scrolling through the source of the website. It was then I
 Battlecode was going to be an first person shooter o.0
 
 (By the way, the website uses Angular)
+
 Anyways, when the competition rolled around, in turns out it was not any sort of first person shooter. So whatever dev that left that comment trolled us. As for the battlestation, due to the college application process, I never got around to finishing the battlestation.
 
 ### Sprint Tournament - Initial Infrastructure
@@ -42,7 +43,7 @@ Our first big infrastructural decision was deciding what language to use. Battle
 
 * Debugging would be a pain - One would have to read transpiled Javascript
     * Eventually, we did figure out line numbers do correspond with compiled_bot.js, which was very useful because the compiled version closely matched when using pure javascript.
-* Not something we could foresee, but jsweet's transpiler online service went down in the middle of the competition.
+* Not something we could foresee, but jsweet's transpiler online service went down in the middle of the competition, causing many teams not be able to transpile their Java code.
 * I wanted to learn javascript anyways
 
 Otherwise, there are two other notable pieces of infrastructure we built during our first week.
@@ -52,21 +53,23 @@ Otherwise, there are two other notable pieces of infrastructure we built during 
     * Treated a unit staying in the same location for 2 turns as "impassable terrain"
         * Explained in the "Navigation" section
     * Transposing (because y, x is confusing for me :S)
-        * It was so confusing - had a very confusing bug where it seemed like one of the maps was transposed
+        * Had a very confusing bug where it seemed like one of the maps was transposed
             * Turns out we were transposing every turn because the maps do not get reset every turn (they do not change from the start)
 * [Dijkstras](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) (and soon after [BFS](https://en.wikipedia.org/wiki/Breadth-first_search)) - stopCondition (and soon after ignoreCondition)
     * PriorityQueue implementation (Heap)
-        * Used Binary Heap
-    * We did not time out because most, if not all, stopped searching early when they found what they wanted
-        * Includes finding church location
-        * Finding path towards enemy castle
-        * Finding path to and from resources
+        * Used [Binary Heap](https://en.wikipedia.org/wiki/Binary_heap) implementation
+    * We did not time out because most, if not all, runs stop search early (stopCondition) when they find what they wanted
+        * Includes finding church locations (Pilgrims)
+        * Finding path towards enemy castle (Combat Units)
+        * Finding path to and from resources (Pilgrims)
 
 [Editing in Progress]
 
 ### Sprint Tournament - Strategy & Macro Game
 
 Initial Inspection
+
+When we read the specs, our initial impression was that the team that made use of give() the best would have a resource advantage, and thus win the long game. One could chain many units from the castle to each of the resources, as if it was some sort of [min-cost flow problem](https://en.wikipedia.org/wiki/Minimum-cost_flow_problem).
 
 [TODO - Making use of the free give to create supply chains - never got viable due to high costs and buffed churches]
 
