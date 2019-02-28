@@ -7,7 +7,7 @@
 
 ### Introduction - Why did I write this?
 
-It's that time of the year again! A month-long constant grind to achieve the invaluable experience of travelling to MIT and glorious fame of (owait there is prize money too ;o). For the past few years, I have participated in Battlecode, but I had never written any sort of writeup. It was only until Cixelyn (Cory Li, MIT 2012, @Cixelyn), a previous winner of battlecode (and also wrote a fascinating post mortem link here), protested that we should write more post mortems.
+It's that time of the year again! A month-long constant grind to achieve the invaluable experience of travelling to MIT and glorious fame of (owait there is prize money too ;o) winning against the top minds of the world. For the past few years, I have participated in Battlecode, but I had never written any sort of writeup. It was only until Cixelyn (Cory Li, MIT 2012, @Cixelyn), a previous winner of battlecode (and also wrote a fascinating post mortem link here), protested that we should write more post mortems.
 
 ![Cixelyn1](writeup-images/Cixelyn1.png)
 
@@ -73,7 +73,7 @@ When we read the specs, our initial impression was that the team that made use o
 
 Navigation
 
-As shown above, a primary piece of infrastructure we built were pathfinding algorithms, Dijkstras and BFS. However, these algorithms in its vanilla form have a difficult time dealing with moving "barriers" (which are actually just other units). If one just simply consider all of the other units as impassable terrain, 
+As shown above, a primary piece of infrastructure we built were pathfinding algorithms, Dijkstras and BFS. However, these algorithms in its vanilla form have a difficult time dealing with moving "barriers" (which are actually just other units). If one just simply consider all of the other units as impassable terrain, a unit could not travel through a 1-wide tunnel without waiting for the first unit to pass, because it would imagine the tunnel to be completely blocked. Yet, if we considered all units to be passable, a unit could be trying to go into a location where there's another unit is simply sitting there, waiting for the enemy to attack. We decided to take a simple approach, considering all units to be passable until they are detected to be not moving, in which they would be considered as impassable. This worked well enough throughout the competition, and possesses the advantage of not incurring explicit communication costs.
 
 Castle Centralization
 
