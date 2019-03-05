@@ -9,7 +9,7 @@
 
 ### Introduction - Why did I write this?
 
-It's that time of the year again! A month-long constant grind to achieve the invaluable experience of travelling to MIT and glorious fame of (owait there is prize money too ;o) winning against the top minds of the world. For the past few years, I have participated in Battlecode, but I had never written any sort of writeup. It was only until Cixelyn (Cory Li, MIT 2012, @Cixelyn), a previous winner of battlecode (and also wrote a fascinating post mortem link here), protested that we should write more post mortems.
+It's that time of the year again! A month-long constant grind to achieve the invaluable experience of travelling to MIT and glorious fame of (owait there is prize money too ;o) winning against the top minds of the world. For the past few years, I have participated in Battlecode, but I had never written any sort of writeup. It was only until Cixelyn (Cory Li, MIT 2012, @Cixelyn), a previous winner of battlecode (and also wrote a fascinating blog post [link here](https://cory.li/battlecode-intro/)), protested that we should write more post mortems.
 
 ![Cixelyn1](writeup-images/Cixelyn1.png)
 
@@ -163,9 +163,21 @@ When the Crusader buff came out, we had an intuition that it wasn't enough to be
 
 [TODO]
 
+### Qualifiers - MIT BeaverWorks
+
+When we qualified for the finals, one of the finalists private messaged me congratulating us. At first, I was very confused, but to my surprise, it turns out they were friends I met over the summer from MIT BeaverWorks. [TODO]
+
+Ian and Denver on team Unlimited
+
 ### High School Bracket
 
+Knights of Cowmelot (howrusogood), Unlimited, Deus Vult
+
+smite + Panda Lovers (Producing Perfection) graduated last year
+
 ### Final tournament
+
+* [Final Tournament Bracket](https://challonge.com/bc_19_finals)
 
 * Emergent Behavior
 
