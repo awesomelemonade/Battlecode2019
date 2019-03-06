@@ -186,7 +186,7 @@ smite + Panda Lovers (Producing Perfection) graduated last year
 
 https://www.twitch.tv/mitbattlecode/clip/IntelligentAnnoyingAsteriskKlappa
 
-* Our second matchup vs Justice Of The War
+* Our first matchup vs Justice Of The War
 
 https://www.twitch.tv/mitbattlecode/clip/GoldenFrozenAsparagusYee
 
