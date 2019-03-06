@@ -89,7 +89,11 @@ Battlecode 2019's communication was particularly restrictive - the only free (ex
 
 To coordinate more units, we need to figure out some form of two way communication. This requirement leads to the only other form of communication: signalling. Unfortunately, transmitting over long distances takes a tremendous amount of fuel (proportional to r^2 where r is the distance). However, a short transmission to an adjacent tile (r = 1, r = 2) would only require a maximum of 4 fuel. It just so happens that build restrictions require new units to be always adjacent to the unit that built them. Therefore, it makes sense to take advantage of this by always sending a signal when we build a new unit. The new unit can then queue up the free castle talks to communicate back to the centralized castles.
 
-### Sprint Tournament - Reflection - Why did we scrap (majority of) this plan?
+### Sprint Tournament - Reflection
+
+Why did we scrap (majority of) this plan?
+
+To be fair, we only started drafting this plan in the last two days before the sprint tournament deadline.
 
 What makes a good Battlecode bot?
 
@@ -105,24 +109,23 @@ Lattice prophets
 
 Scrimming against other teams, someone came up with the idea of creating a lattice of units. Originally, a "lattice" was simply surrounding a pilgrim with 4 prophets on the subcardinal directions. The pilgrim is then still able to move about and deposit the resource it mined to churches and castles.
 
-
-The primary purpose of this lattice is to claim territory, and still allow other units to freely traverse wherever they want. Because units can move diagonally, one can create a checkerboard pattern:
+However, because units can jump over other units this year (most units have movement range to be r^2 <= 4), people quickly realized they could simply build a lattice everywhere and not just near pilgrims. We quickly deducted that the primary purpose of this lattice is to claim territory, and still allow other units to freely traverse wherever they want. Because units can move diagonally, one can create a checkerboard pattern:
 
 [Insert Image]
 
-People started referring this as the
-
-
-Because units can jump over other units this year (most units have move range to be r^2 = 4), a lattice
+People started referring this as the "Sparse Lattice"
 
 Why prophets? Prophets have the highest attack range
 
 checkerboard pattern
+
 [Insert image]
 
 Sparse vs Dense
 
 Distributing the lattice
+
+Our goal is to expand our lattices from all churches and castles, as those are the locations that need to be protected. However, because not all church and castle locations are equal, if one were to always build a prophet if they had enough resources, the lattice can grow unevenly. Therefore, we wanted some sort of counter for each location keeping track how big the lattice is so far, and only grow if the lattice is smaller or equal to all the other lattices. [TODO]
 
 ### Seeding/Qualifiers
 
