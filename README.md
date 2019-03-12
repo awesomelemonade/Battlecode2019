@@ -1,6 +1,6 @@
 # 2950 lines of Javascript AI - An MIT Battlecode 2019 Writeup
 
-[Editing in Progress...]
+[Editing in Progress... (Last Update: 3/12)]
 
 2019: CitricSky - 3rd place (Finalists)\
 2018: CitricSky - Top 16 (Finalists)\
@@ -93,7 +93,7 @@ To coordinate more units, we need to figure out some form of two way communicati
 
 Why did we scrap (majority of) this plan?
 
-Many people say those that ultimately win the tournament often do not do well in the Sprint tournament. This is because those that do well in the final tournament usually have some kind of infrastructure that can more easily adapt to whatever the current meta is. Our first week was planned to be primarily focused on infrastructure, but it is important to be careful not to spiral too deep into microoptimizing this infrastructure and not have time to code your strategy at all. After all, [premmature optimization is the root of all evil](http://wiki.c2.com/?PrematureOptimization).
+Many people say those that ultimately win the tournament often do not do well in the Sprint tournament. This is because those that do well in the final tournament usually have some kind of infrastructure that can more easily adapt to whatever the current meta is. Our first week was planned to be primarily focused on infrastructure, but it is important to be careful not to spiral too deep into microoptimizing this infrastructure and not have time to code your strategy at all. After all, [premature optimization is the root of all evil](http://wiki.c2.com/?PrematureOptimization).
 
 With that in mind, we ultimately never intended our Sprint Tournament Strategy to be our final strategy; we only started drafting this plan two days before the sprint tournament deadline.
 
