@@ -93,10 +93,11 @@ To coordinate more units, we need to figure out some form of two way communicati
 
 Why did we scrap (majority of) this plan?
 
-To be fair, we only started drafting this plan in the last two days before the sprint tournament deadline.
+Many people say those that ultimately win the tournament often do not do well in the Sprint tournament. This is because those that do well in the final tournament usually have some kind of infrastructure that can more easily adapt to whatever the current meta is. Our first week was planned to be primarily focused on infrastructure, but it is important to be careful not to spiral too deep into microoptimizing this infrastructure and not have time to code your strategy at all. After all, [premmature optimization is the root of all evil](http://wiki.c2.com/?PrematureOptimization).
 
-What makes a good Battlecode bot?
+With that in mind, we ultimately never intended our Sprint Tournament Strategy to be our final strategy; we only started drafting this plan two days before the sprint tournament deadline.
 
+All of this talk can boil down to one question: What makes a good Battlecode bot? 
 [TODO]
 
 ### Seeding/Qualifiers/Finals Strategy
@@ -109,6 +110,8 @@ Lattice prophets
 
 Scrimming against other teams, someone came up with the idea of creating a lattice of units. Originally, a "lattice" was simply surrounding a pilgrim with 4 prophets on the subcardinal directions. The pilgrim is then still able to move about and deposit the resource it mined to churches and castles.
 
+[Insert Image]
+
 However, because units can jump over other units this year (most units have movement range to be r^2 <= 4), people quickly realized they could simply build a lattice everywhere and not just near pilgrims. We quickly deducted that the primary purpose of this lattice is to claim territory, and still allow other units to freely traverse wherever they want. Because units can move diagonally, one can create a checkerboard pattern:
 
 [Insert Image]
@@ -117,17 +120,25 @@ People started referring this as the "Sparse Lattice"
 
 Why prophets? Prophets have the highest attack range
 
-checkerboard pattern
-
-[Insert image]
-
 Sparse vs Dense
+
+[TODO]
+
+With movement range to be r^2 <= 4, we can actually pack our units tighter to 3/4 space efficiency (over the 1/2 space efficiency of the standard checkboard pattern). The standard sparse lattice is simply checking whether `(x + y) % 2 == 0`, but we can switch to a sparse lattice simply by adding another OR statement. Dense lattice's formula is `(x + y) % 2 == 0 || x % 2 == 0`.
+
+[Insert Dense Lattice Image]
+
+Our team's initial reaction was dense lattices are obviously better than sparse lattices. After all, they could defend territory with greater efficiency. However, evaluating this in further detail, we realized there was a tradeoff: territory control. [TODO]
 
 Distributing the lattice
 
 Our goal is to expand our lattices from all churches and castles, as those are the locations that need to be protected. However, because not all church and castle locations are equal, if one were to always build a prophet if they had enough resources, the lattice can grow unevenly. Therefore, we wanted some sort of counter for each location keeping track how big the lattice is so far, and only grow if the lattice is smaller or equal to all the other lattices. [TODO]
 
 ### Seeding/Qualifiers
+
+Kiting of (lattice) prophets
+
+[TODO]
 
 ### Seeding/Qualifiers/Finals Strategy - Communication (again)
 
@@ -163,6 +174,10 @@ When the Crusader buff came out, we had an intuition that it wasn't enough to be
 * Prophets take more fuel to kill a crusader than it takes for crusaders to be built (40 fuel vs 15 fuel). This could be useful if we're in a stalemate
 
 * Crusaders have the highest karbonite to unit health ratio, making them the best unit to spam during the endgame when trying to be efficient with karbonite.
+
+[TODO]
+
+Last minute Crusader Endgame Spam adjustment (filling a sparse lattice into a dense lattice with crusaders)
 
 [TODO]
 
